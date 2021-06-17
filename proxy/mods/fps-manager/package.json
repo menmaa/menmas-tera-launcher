@@ -1,0 +1,24 @@
+{
+  "name": "fps-manager",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./fpsManager.js",
+  "engines": {
+    "node": ">=12.4.0"
+  },
+  "scripts": {
+    "lint": "npx eslint '**/*.js' --fix",
+    "manifest": "node ./.manifest.js"
+  },
+  "author": "SaltyMonkey",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.19.0",
+    "eslint-plugin-node": "^11.1.0"
+  },
+  "dependencies": {
+    "rfdc": "^1.2.0",
+    "string-similarity": "^4.0.4"
+  }
+}

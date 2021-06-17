@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "data": {
+        "enchant": true,
+        "upgrade": true,
+        "soulbind": true,
+        "merge": true,
+        "dismantle": true,
+        "repair": true
+    }
+}

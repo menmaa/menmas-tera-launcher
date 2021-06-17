@@ -1,0 +1,63 @@
+{
+	"files": {
+		"index.js": "dc1a20e611c4743c8eeace1c4f32c06d7f9c0c77aa0273f323719c38121cc38d",
+		"module.json": "66d433d3926615e39473966fa5f24b4aa65137808807cf9eeb97baaab7f6c5c9",
+		"lib/me.js": "e1e42081c47aa69b383d84aeac286a3d25ac2b230b7905a511f17e2eb3eb08c0",
+		"lib/contract.js": "297bbff8c8887754f6e50a4fdffb2c1444aa9a7d8f5ef02941d43ad374117b58",
+		"lib/glyphs.js": "0c3c5e48f39fadc6ac0189712f78d2557e18eaaae967044758cd89a42bbd59d2",
+		"lib/inventory.js": "85446f663728bb26117d0fc30f95f486fc33ff50e5e4ca60158befd0b263fd89",
+		"lib/talents.js": "a29bfa8a6302dae58f30e59765dddf89c16d2f44cf28c21992794d9b96bfbe4f",
+		"doc/contract.md": "f872ec8ac7fdd48c7cc7ef1b5cd164b6221b467f0ce422ed30f3e2fee187cd59",
+		"doc/data.md": "82470c169c0354f6500f0456804d72c310ef3ea63cc2c4677b0cbdd17798f850",
+		"doc/glyphs.md": "282cd028c37e8afa28dd22bcd1d638bceb1447e60858a8a6b21fe327d874b4be",
+		"doc/inventory.md": "a9cff75b917845bbe4c1d37ea2bd6500597e30978156c066900d5115f0b5b22d",
+		"doc/talents.md": "659586de327eea7ed7d669dfb629304c0b118bccf41f4c09b938a94a7914f01b",
+		"doc/me.md": "80239e1d6d6e2afee5b0e330f476abed736e69209a77cb462fbfef227927e4e3",
+		"README.md": "d1afb5b1788c98b762ecc2cc29db922a346e29c6bc62e57769dfbc9cb6aff683",
+		"doc/party.md": "8787ba057576927924b36eaea0ff922a8266fcac8f686064bd1dfebe112bf583",
+		"lib/party.js": "bcfa5646e3beb00ce5976757d035bf94bb55de6e2252e42dfb68669ea8c711b7"
+	},
+	"defs": {
+		"C_LOGIN_ARBITER": 2,
+		"S_LOGIN_ACCOUNT_INFO": 2,
+		"S_GET_USER_LIST": "event",
+		"S_RETURN_TO_LOBBY": "event",
+		"S_LOGIN": [
+			"event",
+			14
+		],
+		"S_LOAD_TOPO": [
+			"event",
+			3
+		],
+		"S_SPAWN_ME": [
+			"event",
+			3
+		],
+		"S_CREATURE_LIFE": 3,
+		"S_MOUNT_VEHICLE": 2,
+		"S_UNMOUNT_VEHICLE": 2,
+		"S_EXIT": "event",
+		"S_USER_CHANGE_NAME": 1,
+		"S_USER_LEVELUP": 2,
+		"S_USER_STATUS": 3,
+		"S_REQUEST_CONTRACT": 1,
+		"S_ACCEPT_CONTRACT": "event",
+		"S_REJECT_CONTRACT": "event",
+		"S_CANCEL_CONTRACT": "event",
+		"S_INVEN_USERDATA": 2,
+		"S_ITEMLIST": [
+			3,
+			4
+		],
+		"S_LOAD_EP_INFO": [
+			1,
+			2
+		],
+		"S_LEARN_EP_PERK": 1,
+		"TTB_S_LOAD_EP_PAGE": 1,
+		"S_RESET_EP_PERK": 1,
+		"S_CREST_INFO": 2,
+		"S_CREST_APPLY": 2
+	}
+}

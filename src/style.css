@@ -1,0 +1,328 @@
+@import url('https://fonts.googleapis.com/css2?family=Love+Ya+Like+A+Sister&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-image: url('images/Elin_BG_T3.png');
+    color: white;
+    /* font-family: 'Love Ya Like A Sister', cursive; */
+    font-family: 'Times New Roman', serif;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+}
+
+header {
+    -webkit-app-region: drag;
+    overflow: hidden;
+    padding: 10px;
+}
+
+.tera-logo {
+    float: left;
+    margin-right: 20px;
+    width: 200px;
+}
+
+.whatever {
+    float: left;
+    line-height: 60px;
+}
+
+.control-buttons {
+    float: right;
+    margin: 10px;
+}
+
+.control-buttons a {
+    -webkit-app-region: no-drag;
+    color: white;
+    font-size: 32px;
+    margin: 0 15px;
+    text-decoration: none;
+}
+
+.account-info {
+    display: none;
+    float: right;
+    margin: 10px;
+    text-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
+}
+
+.account-info a {
+    -webkit-app-region: no-drag;
+    color: #fff;
+}
+
+.account-info a:hover {
+    text-decoration: none;
+}
+
+.proxy-info {
+    float: left;
+    margin: 10px;
+}
+
+.proxy-info a {
+    -webkit-app-region: no-drag;
+    color: white;
+}
+
+.proxy-info a:hover {
+    text-decoration: none;
+}
+
+.warning-icon {
+    -webkit-app-region: no-drag;
+    display: none;
+    width: 14px;
+    margin-left: 5px;
+}
+
+footer {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 20px;
+    min-height: 60px;
+}
+
+.patch-progress {
+    width: 70%;
+    padding: 5px;
+}
+
+.patch-progress #patchProgressText {
+    display: block;
+    min-height: 35px;
+    text-shadow: 1px 1px 1px black;
+}
+
+.patch-progress-bar {
+    background: #272727;
+    border-radius: 5px;
+    box-shadow: inset 0 0 4px black;
+    display: block;
+    margin-bottom: 5px;
+    width: 100%;
+    height: 20px;
+    text-align: center;
+}
+
+.patch-progress-bar #patchProgressBar {
+    background-color: lavender;
+    border-radius: inherit;
+    width: 100%;
+    height: inherit;
+    transition: width .5s linear;
+}
+
+.launch-game {
+    position: relative;
+    width: 30%;
+}
+
+#launchGame {
+    appearance: none;
+    background: linear-gradient(0deg, rgba(18,19,83,1) 0%, rgba(40,43,173,1) 100%);
+    border-radius: 5px;
+    border: 3px double white;
+    cursor: pointer;
+    color: white;
+    font-family: inherit;
+    font-size: 30px;
+    position: absolute;
+    left: 20px;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: calc(100% - 20px);
+}
+
+.modal-backdrop {
+    -webkit-app-region: no-drag;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: black;
+    opacity: 0;
+    transition: all .1s linear;
+    z-index: 1000;
+}
+
+.console-modal,
+.error-modal,
+.login-modal {
+    /* background: linear-gradient(30deg, rgba(4,5,29,1) 0%, rgba(34,36,101,1) 100%); */
+    background: url('images/bg-menma.jpg');
+    border-radius: 20px;
+    box-shadow: 2px 2px 10px black;
+    display: none;
+    width: 324px;
+    height: 400px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -162px;
+    margin-top: -200px;
+    padding: 20px;
+    opacity: 0;
+    text-align: center;
+    transform: scale(0.85);
+    transition: all .1s linear;
+    z-index: 1000;
+}
+
+.error-modal {
+    background-position-y: -100px;
+    height: 200px;
+    margin-top: -100px;
+}
+
+.modal-message {
+    display: none;
+    font-size: 15px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: -1px -1px 5px black, -1px 1px 5px black, 1px -1px 5px black, 1px 1px 5px black;
+}
+
+.modal-message > span {
+    display: block;
+    font-size: 30px;
+}
+
+.console-modal {
+    -webkit-app-region: no-drag;
+    background: #313131;
+    font-family: sans-serif;
+    width: 700px;
+    height: 500px;
+    margin-left: -350px;
+    margin-top: -250px;
+    padding: 0;
+}
+
+.console-window {
+    font-family: monospace;
+    height: 420px;
+    background-color: black;
+    margin: 0 20px;
+    padding: 10px;
+    overflow-y: scroll;
+    text-align: left;
+    padding: 10px;
+}
+
+.console-window::-webkit-scrollbar {
+    width: 12px;
+}
+
+.console-window::-webkit-scrollbar-track {
+    background-color: black;
+}
+.console-window::-webkit-scrollbar-thumb {
+    background-color: #313131;
+    border-radius: 20px;
+    border: 3px solid black;
+}
+
+#consoleClear {
+    color: #fff;
+    font-family: monospace;
+    font-size: 16px;
+    position: absolute;
+    top: 65px;
+    right: 35px;
+    text-decoration: none;
+}
+
+.form-input {
+    appearance: none;
+    display: block;
+    color: #000;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 20px;
+    background-color: #fff;
+    border: 3px double #000;
+    border-radius: 5px;
+    box-shadow: inset 0 0 4px #000;
+}
+
+#launchGame:focus,
+.form-input:focus,
+.modal-button:focus {
+    outline: none;
+}
+
+.form-input[type="submit"] {
+    background: linear-gradient(0deg, rgba(18,19,83,1) 0%, rgba(40,43,173,1) 100%);
+    border: none;
+    box-shadow: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 30px;
+    margin-bottom: 0;
+}
+
+.modal-button {
+    appearance: none;
+    background: linear-gradient(0deg, rgba(18,19,83,1) 0%, rgba(40,43,173,1) 100%);
+    border: none;
+    border-radius: 5px;
+    display: block;
+    color: #fff;
+    cursor: pointer;
+    width: 100%;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 16px;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.form-input.disabled[type="submit"],
+.launch-game #launchGame.disabled {
+    background: linear-gradient(0deg, rgba(58,58,74,1) 0%, rgba(146,146,179,1) 100%);
+}
+
+.loading-icon {
+    display: none;
+    width: 64px;
+    height: 64px;
+}
+
+.error-msg {
+    color: #f00;
+    font-size: 14px;
+}
+
+.lm-footer {
+    margin: 10px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.lm-footer a {
+    color: white;
+}
+
+.lm-footer a:hover {
+    text-decoration: none;
+}

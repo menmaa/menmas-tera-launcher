@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Menma's TERA</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+<body>
+    <header>
+        <img src="images/MenmasTera.png" class="tera-logo">
+        <div class="proxy-info">
+            TERA Proxy: <span id="proxyStatus" style="color: #f00">Stopped</span><img src="images/warning.svg" class="warning-icon"></img><br>
+            <a href="#" id="toggleProxy">Start</a> | <a href="#" id="showConsole">Console</a> | <a href="#" id="showMods">Mods</a></div>
+        <div class="control-buttons">
+            <a href="#" id="min-btn">-</a>
+            <a href="#" id="close-btn">X</a>
+        </div>
+        <div class="account-info">Welcome, <span id="accountName"></span>!<br><a href="#" id="accountLogout">Log Out</a></div>
+    </header>
+    <footer>
+        <div class="patch-progress">
+            <div id="ppb" class="patch-progress-bar"><div id="patchProgressBar"></div></div>
+            <label id="patchProgressText" for="ppb">Completed</label>
+        </div>
+        <div class="launch-game">
+            <button id="launchGame">Play</button>
+        </div>
+    </footer>
+    <div>
+        <div class="modal-backdrop"></div>
+        <div class="login-modal">
+            <p class="modal-message">Login to <span>Menma's TERA</span></p>
+            <form id="loginForm" action="javascript:void(0);" style="margin-top: 90px; text-align: left">
+                <input type="text" class="form-input" placeholder="Username" id="username" name="username">
+                <input type="password" class="form-input" placeholder="Password" id="password" name="password">
+                <input type="checkbox" id="rememberMe" name="rememberMe" style="display: initial; margin-top: 0; margin-bottom: 10px">
+                <label for="rememberMe"> Remember Me</label>
+                <input type="submit" class="form-input" id="submitLogin" value="Login">
+            </form>
+            <img src="images/loading.svg" id="loadingIcon" class="loading-icon">
+            <p id="loginErrorMsg" class="error-msg"></p>
+            <p class="lm-footer"><a href="#" id="passwordReset">Password Reset</a> | <a href="#" id="createNewAccount">Create New Account</a></p>
+        </div>
+        <div class="error-modal">
+            <div style="height: 100%; overflow: hidden; position: relative">
+                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Client Error</h3>
+                <p id="errorModalMsg" style="font-size: 16px;"></p>
+                <button id="errorModalButton" class="modal-button">OK</button>
+            </div>
+        </div>
+        <div class="console-modal">
+            <h3 style="text-align: center; font-weight: 500">Launcher Console</h3>
+            <div id="consoleOutput" class="console-window"></div>
+            <a href="javascript:;" id="consoleClear">X</a>
+        </div>
+    </div>
+    <script>
+        const { ipcRenderer, shell, remote } = require('electron');
+        const path = require('path');
+
+        const ERROR_MESSAGES = {
+            5: "Termination Code 5: DirectX could not be found, is corrupt or an incorrect version is installed.",
+            6: "Termination Code 6: The database contains invalid data.",
+            8: "Termination Code 8: A network error has occurred.",
+            9: "Termination Code 9: Session Ticket not received. The launcher did not respond to the ticket request within 5 seconds.",
+            10: "Termination Code 10: Insufficient RAM.",
+            11: "Termination Code 11: Failed to reset DirectX.",
+            12: "Termination Code 12: The graphics card in use is unsuitable, too old or unknown.",
+            13: "Termination Code 13: The game was closed due to inactivity.",
+            16: "Termination Code 16: Your connection was terminated by the server.",
+            33: "Termination Code 33: Your connection was terminated by the server.",
+            34: "Termination Code 34: Your connection was terminated by the server.",
+            257: "Termination Code 257: Login error. The server could not confirm your login.",
+            259: "Termination Code 259: Double login. Another client is logged in using your account.",
+            265: "Termination Code 265: Client corrupted. Repair the client using the launcher's repair function.",
+            273: "Termination Code 273: SLS error. Server list cannot be retrieved or contains errors.",
+            275: "Termination Code 275: TERA.exe could not be launched.",
+            65535: "The client was closed abnormally.",
+            unknown: "The client was closed. Please try again."
+        };
+
+        let backdrop = document.querySelector('.modal-backdrop');
+        let loginModal = document.querySelector('.login-modal');
+        let errorModal = document.querySelector('.error-modal');
+        let consoleModal = document.querySelector('.console-modal');
+
+        let isLoggedIn = false;
+        let proxyRunning = false;
+
+        function init() {
+            document.getElementById("min-btn").addEventListener("click", (e) => {
+                ipcRenderer.send('window-minimize');
+            });
+
+            document.getElementById("close-btn").addEventListener("click", (e) => {
+                ipcRenderer.removeAllListeners();
+                ipcRenderer.send('window-close');
+            });
+
+            document.getElementById("launchGame").addEventListener("click", (e) => {
+                if(e.target.classList.contains('disabled')) return;
+
+                showLoginModal();
+
+                if(isLoggedIn) {
+                    retrieveGameString();
+                }
+            });
+
+            document.getElementById('createNewAccount').addEventListener("click", (e) => {
+                shell.openExternal("https://tera.menmasystems.com/register");
+            });
+
+            document.getElementById('passwordReset').addEventListener("click", (e) => {
+                shell.openExternal("https://tera.menmasystems.com/account/password_reset");
+            });
+
+            backdrop.addEventListener('click', function() {
+                hideLoginModal(true);
+                hideConsoleModal();
+            });
+            document.getElementById('errorModalButton').addEventListener('click', hideErrorModal);
+            document.getElementById('loginForm').addEventListener('submit', executeLoginRequest);
+            document.getElementById('toggleProxy').addEventListener('click', toggleProxy);
+            document.getElementById('showConsole').addEventListener('click', showConsoleModal);
+            document.getElementById('showMods').addEventListener('click', showModsFolder);
+            document.getElementById('consoleClear').addEventListener('click', clearConsoleContents);
+            document.getElementById('accountLogout').addEventListener('click', logout);
+        };
+
+        function showLoginModal() {
+            loginModal.style.display = "initial";
+            backdrop.style.display = "initial";
+
+            setTimeout(() => {
+                loginModal.style.transform = "scale(1)";
+                loginModal.style.opacity = 1;
+                backdrop.style.opacity = 0.7;
+            }, 10);
+        }
+
+        function hideLoginModal(cancelLogin = false) {
+            if(cancelLogin)
+                ipcRenderer.send('abort-login-req');
+
+            loginModal.style.transform = "scale(0.85)";
+            loginModal.style.opacity = 0;
+            backdrop.style.opacity = 0;
+
+            setTimeout(() => {
+                loginModal.style.display = "none";
+                backdrop.style.display = "none";
+            }, 100);
+        }
+
+        function showErrorModal(msg) {
+            document.getElementById('errorModalMsg').innerHTML = msg;
+
+            errorModal.style.display = "initial";
+            backdrop.style.display = "initial";
+
+            setTimeout(() => {
+                errorModal.style.transform = "scale(1)";
+                errorModal.style.opacity = 1;
+                backdrop.style.opacity = 0.7;
+            }, 10);
+        }
+
+        function hideErrorModal() {
+            document.getElementById('errorModalMsg').innerHTML = "";
+
+            errorModal.style.transform = "scale(0.85)";
+            errorModal.style.opacity = 0;
+            backdrop.style.opacity = 0;
+
+            setTimeout(() => {
+                errorModal.style.display = "none";
+                backdrop.style.display = "none";
+            }, 100);
+        }
+
+        function showConsoleModal() {
+            consoleModal.style.display = "initial";
+            backdrop.style.display = "initial";
+
+            let contents = document.getElementById('consoleOutput');
+            contents.scrollTop = contents.scrollHeight;
+
+            setTimeout(() => {
+                consoleModal.style.transform = "scale(1)";
+                consoleModal.style.opacity = 1;
+                backdrop.style.opacity = 0.7;
+            }, 10);
+        }
+
+        function hideConsoleModal() {
+            consoleModal.style.transform = "scale(0.85)";
+            consoleModal.style.opacity = 0;
+            backdrop.style.opacity = 0;
+
+            setTimeout(() => {
+                consoleModal.style.display = "none";
+                backdrop.style.display = "none";
+            }, 100);
+        }
+
+        function clearConsoleContents() {
+            document.getElementById('consoleOutput').innerHTML = "";
+
+            let warningIcon = document.querySelector('.proxy-info .warning-icon');
+            warningIcon.style.display = "none";
+            warningIcon.removeAttribute('title');
+        }
+
+        function showModsFolder() {
+            shell.openPath(path.join(process.cwd(), 'proxy', 'mods'));
+        }
+
+        ipcRenderer.on('patchProgress', (event, percentage, text, launchEnabled) => {
+            document.getElementById('patchProgressBar').style.width = percentage + "%";
+            document.getElementById('patchProgressText').innerHTML = text;
+
+            if(launchEnabled)
+                document.getElementById('launchGame').classList.remove('disabled');
+            else
+                document.getElementById('launchGame').classList.add('disabled');
+        });
+
+        async function executeLoginRequest() {
+            let username = document.getElementById('username').value;
+            let password = document.getElementById('password').value;
+            let rememberMe = document.getElementById('rememberMe').checked;
+            let submitLogin = document.getElementById('submitLogin');
+            let loadingIcon = document.getElementById('loadingIcon');
+            let errorMsg = document.getElementById('loginErrorMsg');
+
+            if(submitLogin.classList.contains('disabled')) return;
+            
+            errorMsg.innerHTML = "";
+            submitLogin.classList.add('disabled');
+            loadingIcon.style.display = "initial";
+
+            ipcRenderer.send('loginRequest', username, password, rememberMe);
+        }
+
+        ipcRenderer.on('loginResponse', (event, err, username, launchGame) => {
+            document.getElementById('submitLogin').classList.remove('disabled');
+            document.getElementById('loadingIcon').style.display = "none";
+
+            if(!err) {
+                isLoggedIn = true;
+                document.querySelector('.account-info').style.display = "initial";
+                document.getElementById('accountName').innerHTML = username;
+
+                if(!document.getElementById('username').value)
+                    document.getElementById('username').value = username;
+                if(!document.getElementById('password').value)
+                    document.getElementById('password').value = "password";
+
+                if(launchGame)
+                    retrieveGameString();
+            } else if(err !== "request-cancel") {
+                document.getElementById('loginErrorMsg').innerHTML = err;
+            }
+        });
+
+        function retrieveGameString() {
+            let submitLogin = document.getElementById('submitLogin');
+            let loadingIcon = document.getElementById('loadingIcon');
+            let errorMsg = document.getElementById('loginErrorMsg');
+
+            errorMsg.innerHTML = "";
+            submitLogin.classList.add('disabled');
+            loadingIcon.style.display = "initial";
+
+            ipcRenderer.send('launchGame');
+        }
+
+        ipcRenderer.on('launchGameRes', (event, err) => {
+            document.getElementById('submitLogin').classList.remove('disabled');
+            document.getElementById('loadingIcon').style.display = "none";
+
+            if(!err) {
+                hideLoginModal();
+                let launchGameBtn = document.getElementById("launchGame");
+                launchGameBtn.classList.add('disabled');
+                launchGameBtn.innerHTML = "Launching...";
+            } else if(err !== "request-cancel") {
+                document.getElementById('loginErrorMsg').innerHTML = err;
+            }
+        });
+
+        ipcRenderer.on('gameMessage', (event, message, code) => {
+            if(message === "gameEvent" && code === 1001) {
+                document.getElementById("launchGame").innerHTML = "Game Running";
+            } else if(message === "endPopup") {
+                let terminationCode = code & 0xffff;
+                if (terminationCode == 0 || terminationCode == 7) return;
+
+                if(ERROR_MESSAGES[terminationCode]) {
+                    showErrorModal(ERROR_MESSAGES[terminationCode]);
+                } else {
+                    showErrorModal(ERROR_MESSAGES.unknown);
+                }
+            }
+        });
+
+        ipcRenderer.on('exitGame', (event) => {
+            let launchGameBtn = document.getElementById("launchGame");
+            launchGameBtn.classList.remove('disabled');
+            launchGameBtn.innerHTML = "Play";
+        });
+
+        function logout() {
+            ipcRenderer.send('logoutRequest');
+            isLoggedIn = false;
+            document.querySelector('.account-info').style.display = "none";
+            document.getElementById('accountName').innerHTML = "";
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
+        }
+
+        document.onreadystatechange =  () => {
+            if (document.readyState == "complete") {
+                init();
+            }
+        };
+
+        function toggleProxy(event) {
+            let proxyStatus = document.getElementById('proxyStatus');
+            let toggleButton = document.getElementById('toggleProxy');
+            proxyStatus.style.color = "yellow";
+            
+            if(proxyRunning) {
+                proxyStatus.innerHTML = "Stopping...";
+                ipcRenderer.send('stopProxy');
+            } else {
+                proxyStatus.innerHTML = "Starting...";
+                ipcRenderer.send('startProxy');
+            }
+
+            toggleButton.style.pointerEvents = "none";
+            toggleButton.style.color = "gray";
+        }
+
+        ipcRenderer.on('proxy-running', (event, failedMods) => {
+            let proxyStatus = document.getElementById('proxyStatus');
+            let toggleButton = document.getElementById('toggleProxy');
+            let warningIcon = document.querySelector('.proxy-info .warning-icon');
+            proxyStatus.style.color = "#0f0";
+            proxyStatus.innerHTML = "Running";
+
+            toggleButton.style.pointerEvents = "auto";
+            toggleButton.style.color = "#fff";
+            toggleButton.innerHTML = "Stop";
+            proxyRunning = true;
+
+            if(failedMods.length > 0) {
+                warningIcon.style.display = "initial";
+                warningIcon.setAttribute('title', `${failedMods.length} mods failed to load. Check console for details.`);
+            } else {
+                warningIcon.style.display = "none";
+                warningIcon.removeAttribute('title');
+            }
+        });
+
+        ipcRenderer.on('proxy-stopped', (event, err) => {
+            let proxyStatus = document.getElementById('proxyStatus');
+            let toggleButton = document.getElementById('toggleProxy');
+            let warningIcon = document.querySelector('.proxy-info .warning-icon');
+            proxyStatus.style.color = "#f00";
+            proxyStatus.innerHTML = "Stopped";
+            toggleButton.style.pointerEvents = "auto";
+            toggleButton.style.color = "#fff";
+            toggleButton.innerHTML = "Start";
+
+            if(err) {
+                warningIcon.style.display = "initial";
+                warningIcon.setAttribute('title', 'TERA Proxy failed to load. Check console for details.');
+            } else {
+                warningIcon.style.display = "none";
+                warningIcon.removeAttribute('title');
+            }
+            proxyRunning = false;
+        });
+
+        ipcRenderer.on('console-log', (event, msg, type) => {
+            let contents = document.getElementById('consoleOutput');
+            let warningIcon = document.querySelector('.proxy-info .warning-icon');
+            let el = document.createElement('div');
+
+            switch(type) {
+                case "error": {
+                    el.style.color = "red";
+
+                    if(warningIcon.style.display === "none") {
+                        warningIcon.style.display = "initial";
+                        warningIcon.setAttribute('title', 'TERA Proxy requires your attention. Check console for details.');
+                    }
+                    break;
+                }
+                case "warn":
+                    el.style.color = "yellow";
+                    break;
+                default:
+                    el.style.color = "#fff";
+            }
+
+            el.innerText = msg;
+            contents.appendChild(el);
+            contents.scrollTop = contents.scrollHeight;
+        });
+    </script>
+</body>
+</html>

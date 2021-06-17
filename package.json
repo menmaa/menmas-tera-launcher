@@ -1,0 +1,61 @@
+{
+  "name": "menmas-tera-launcher",
+  "version": "1.2.2",
+  "description": "Menma's TERA Launcher",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "Menma",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^11.2.1",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "axios-concurrency": "^1.0.4",
+    "ffi-napi": "^3.1.0",
+    "graceful-fs": "^4.2.6",
+    "keytar": "^7.3.0",
+    "retry": "^0.12.0"
+  },
+  "build": {
+    "productName": "Menma's TERA",
+    "appId": "com.menmasystems.mtl",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "*.js",
+      "src/",
+      "node_modules/"
+    ],
+    "win": {
+      "target": [
+        "zip",
+        "nsis"
+      ],
+      "artifactName": "MenmasTeraInstaller.${ext}",
+      "extraFiles": [
+        "Teralauncher.dll",
+        "MTLUpdater.exe",
+        "version.txt",
+        "proxy/"
+      ],
+      "publisherName": "Menma",
+      "verifyUpdateCodeSignature": false,
+      "requestedExecutionLevel": "requireAdministrator"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "uninstallDisplayName": "${productName}"
+    },
+    "extraMetadata": {
+      "name": "Menma's TERA"
+    }
+  }
+}

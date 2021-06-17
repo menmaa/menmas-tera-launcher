@@ -1,0 +1,10 @@
+{
+    "version": 3,
+    "data": {
+        "login_message": true,
+        "private_channel_name": "Toolbox",
+        "public_enable": true,
+        "hide_module_names": false,
+        "silent_mode": false
+    }
+}

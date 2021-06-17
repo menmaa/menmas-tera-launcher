@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MTL Updater</title>
+    <style>
+        body {
+            -webkit-app-region: drag;
+            background: url('images/bg-menma.jpg');
+            color: #fff;
+            text-align: center;
+        }
+
+        .update-status {
+            margin: 0;
+            padding-top: 130px;
+        }
+
+        .loading-icon {
+            width: 64px;
+        }
+    </style>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+</head>
+<body>
+    <p id="updateStatus" class="update-status">Checking for launcher updates...</p>
+    <img src="images/loading.svg" class="loading-icon">
+</body>
+<script>
+    const { ipcRenderer } = require('electron');
+
+    ipcRenderer.on('updateStatus', (event, message) => {
+        document.getElementById('updateStatus').innerHTML = message;
+    });
+</script>
+</html>

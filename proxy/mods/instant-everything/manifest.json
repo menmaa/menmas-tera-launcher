@@ -1,0 +1,28 @@
+{
+    "files": {
+        "index.js": "3dbf5d171e205e132f6254fcaacbdc4eec8af54e2a1505b6be0a8ab8cc7b10ed",
+        "settings_migrator.js": "823fc1c204003a4a782e23b1a0781b9ee48d2865004a8acb73359777c0c067bc",
+        "settings_structure.js": "76520793fad024750498529f19c830819b5d9e3b0ab6aa408caaf32c0c7b2000",
+        "module.json": "ec9e118ef92578fdc151ab899ecd5de100070393615a0d3a2719851b79b272ba"
+    },
+    "defs": {
+        "C_REGISTER_ENCHANT_ITEM": 1,
+        "C_REQUEST_ENCHANT": ["raw", 1],
+        "C_START_ENCHANT": 1,
+
+        "C_REGISTER_EVOLUTION_ITEM": 1,
+        "C_REQUEST_EVOLUTION": ["raw", 1],
+        "C_START_EVOLUTION": 1,
+
+        "C_BIND_ITEM_BEGIN_PROGRESS": 1,
+        "C_BIND_ITEM_EXECUTE": ["raw", 1],
+
+        "C_MERGE_ITEM_EXECUTE": ["raw", 1],
+
+        "C_RQ_START_SOCIAL_ON_PROGRESS_DECOMPOSITION": 1,
+        "C_RQ_COMMIT_DECOMPOSITION_CONTRACT": ["raw", 1],
+
+        "S_REQUEST_CONTRACT": 1,
+        "S_CANCEL_CONTRACT": 1
+    }
+}

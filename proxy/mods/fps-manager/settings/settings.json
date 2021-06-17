@@ -1,0 +1,16 @@
+{
+    "version": 1,
+    "data": {
+        "registerCommands": true,
+        "fpsUtilsCommandsPrefix": true,
+        "registerUI": true,
+        "registerUIShortcut": false,
+        "UIShortcut": "",
+        "simplifiedMode": false,
+        "interactive": true,
+        "cleanChat": false,
+        "debugMode": false,
+        "classBasedPresets": true,
+        "enableEvents": false
+    }
+}
