@@ -1,7 +1,3 @@
-const fs = require('fs');
-const gracefulFs = require('graceful-fs');
-gracefulFs.gracefulify(fs);
-
 const { app, BrowserWindow, ipcMain } = require('electron');
 const keytar = require('keytar');
 const loginController = require('./login');
@@ -176,6 +172,17 @@ ipcMain.on('launchGame', async (event) => {
     } catch (err) {
         event.reply('launchGameRes', err);
     }
+});
+
+ipcMain.on('patch-paused-state', (event, paused) => {
+    if(paused)
+        patcher.pauseDownload();
+    else
+        patcher.downloadFiles(win);
+});
+
+ipcMain.on('repair-client', (event) => {
+    patcher.checkForUpdates(win, true);
 });
 
 ipcMain.on('window-minimize', (event) => {

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const LOGIN_URL = "https://tera.menmasystems.com/launcher";
+const LOGIN_URL = "https://account.menmastera.com/launcher";
 
 let source = axios.CancelToken.source();
 
@@ -27,6 +27,10 @@ function login(username, password) {
                 switch(err.response.status) {
                     case 401: {
                         reject("Invalid username / password combination.");
+                        break;
+                    }
+                    case 403: {
+                        reject("Account not activated. Check your email inbox or SPAM folder to confirm your email address.");
                         break;
                     }
                     default: {

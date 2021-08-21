@@ -40,7 +40,7 @@ header {
     -webkit-app-region: no-drag;
     color: white;
     font-size: 32px;
-    margin: 0 15px;
+    margin: 0 10px;
     text-decoration: none;
 }
 
@@ -157,10 +157,10 @@ footer {
     z-index: 1000;
 }
 
+.repair-modal,
 .console-modal,
 .error-modal,
 .login-modal {
-    /* background: linear-gradient(30deg, rgba(4,5,29,1) 0%, rgba(34,36,101,1) 100%); */
     background: url('images/bg-menma.jpg');
     border-radius: 20px;
     box-shadow: 2px 2px 10px black;
@@ -180,6 +180,7 @@ footer {
     z-index: 1000;
 }
 
+.repair-modal,
 .error-modal {
     background-position-y: -100px;
     height: 200px;
@@ -198,6 +199,14 @@ footer {
 .modal-message > span {
     display: block;
     font-size: 30px;
+}
+
+#repair-btn.disabled {
+    cursor: initial !important;
+}
+
+#repair-btn.disabled svg {
+    fill: #313131 !important;
 }
 
 .console-modal {

@@ -1,43 +1,65 @@
-const fs = require('graceful-fs');
+const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 const http = require('http');
-const { ConcurrencyManager } = require("axios-concurrency");
+const https = require('https');
 const retry = require('retry');
 
-const MAX_CONCURRENT_REQUESTS = 5;
-const PATCH_URL = 'http://patch.tera.menmasystems.com';
+const MAX_DOWNLOAD_SPEED_VALUES = 10;
+const PATCH_URL = 'http://patch.menmastera.com';
 
-exports.checkForUpdates = async function(win) {
-    let patchProgressUpdate;
-    let downloadedFiles = {};
+let patchProgressUpdate;
+let downloadedFiles = {};
+let buildVersion;
+let cancellationSource;
+let toDownload = [];
+let toDownloadSize = 0;
+let toDownloadSizeFormatted;
+let downloadedSize = 0;
+let lastDownloadedSize = 0;
+let downloadSpeeds = new Array(MAX_DOWNLOAD_SPEED_VALUES).fill(0);
+let agent = axios.create({
+    baseURL: PATCH_URL,
+    method: 'get',
+    responseType: 'stream',
+    httpAgent: new http.Agent({ keepAlive: true }),
+    httpsAgent: new https.Agent({ keepAlive: true }),
+    timeout: 60000
+});
 
-    win.webContents.send('patchProgress', 100, "Checking for updates...", false);
+async function checkForUpdates(win, skipCheck = false) {
+    patchProgressUpdate = null;
+    downloadedFiles = {};
+    buildVersion = null;
+    cancellationSource = null;
+    toDownload = [];
+    toDownloadSize = 0;
+    toDownloadSizeFormatted = null;
+    downloadedSize = 0;
+    lastDownloadedSize = 0;
+
+    win.webContents.send('patchProgress', 100, "Checking for updates...", 1);
 
     try {
-		fs.unlink("Client/build", () => {});
-		
-        if(fs.existsSync("Client/build.json")) {
+        if(fs.existsSync("Client/build.json") && !skipCheck) {
             let buildData = JSON.parse(fs.readFileSync("Client/build.json", 'utf8'));
 
             let localBuildVersion = buildData.buildVersion;
             let remoteBuildVersion = await getLatestBuildVersion();
 
             if(localBuildVersion === remoteBuildVersion) {
-                win.webContents.send('patchProgress', 100, "Completed", true);
+                win.webContents.send('patchProgress', 100, "Completed", 0);
                 return;
             }
 
             downloadedFiles = Object.assign({}, buildData.files);
         }
 
-        win.webContents.send('patchProgress', 100, "Retrieving patch information...", false);
-
+        win.webContents.send('patchProgress', 100, "Retrieving patch information...", 1);
         let patchInfo = await getLatestBuildInfo();
-        let toDownload = new Map();
-        let toDownloadSize = 0;
-
-        win.webContents.send('patchProgress', 0, "Checking existing files...", false);
+        buildVersion = patchInfo.buildVersion;
+        
+        win.webContents.send('patchProgress', 0, "Checking existing files...", 1);
 
         for (let i in patchInfo.entries) {
             let entry = patchInfo.entries[i];
@@ -48,109 +70,122 @@ exports.checkForUpdates = async function(win) {
                 continue;
             };
 
-            if(downloadedFiles[entry.file]) {
+            if(downloadedFiles[entry.file] && !skipCheck) {
                 if(downloadedFiles[entry.file] !== entry.sha1) {
-                    toDownload.set(entry.sha1, entry.file);
+                    toDownload.push({ path: entry.file, hash: entry.sha1 });
                     toDownloadSize += entry.size;
                 }
             } else if(!(await checkFileIntegrity(entry))) {
-                toDownload.set(entry.sha1, entry.file);
+                toDownload.push({ path: entry.file, hash: entry.sha1 });
                 toDownloadSize += entry.size;
             } else downloadedFiles[entry.file] = entry.sha1;
 
             let percentage = (Math.trunc(i / patchInfo.entries.length * 10000) / 100).toFixed(2);
-            win.webContents.send('patchProgress', percentage, `Checking existing files ${percentage}%...`, false);
+            win.webContents.send('patchProgress', percentage, `Checking existing files ${percentage}%...`, 1);
         }
+        toDownloadSizeFormatted = formatBytes(toDownloadSize);
 
-        if(toDownload.size > 0) {
-            let downloadedSize = 0;
-            let lastDownloadedSize = 0;
-            let toDownloadSizeFormatted = formatBytes(toDownloadSize);
-            let source = axios.CancelToken.source();
-            let agent = axios.create({
-                baseURL: PATCH_URL + '/latest/download',
-                method: 'get',
-                responseType: 'stream',
-                cancelToken: source.token,
-                httpAgent: new http.Agent({ keepAlive: true })
-            });
-            let manager = ConcurrencyManager(agent, MAX_CONCURRENT_REQUESTS);
-            let errorHandler = function(err) {
-                source.cancel(err);
-                manager.detach();
-                clearInterval(patchProgressUpdate);
-                win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, false);
-            }
+        downloadFiles(win);
+    } catch (err) {
+        clearInterval(patchProgressUpdate);
+        win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
+    }
+}
 
-            win.webContents.send('patchProgress', 0, 'Downloading Files...', false);
+async function downloadFiles(win) {
+    try {
+        if(toDownload.length > 0) {
+            downloadSpeeds = new Array(MAX_DOWNLOAD_SPEED_VALUES).fill(0);
 
-            Array.from(toDownload.keys()).forEach((entry) => {
-                let operation = retry.operation({ retries: 3 });
+            patchProgressUpdate = setInterval(() => {
+                downloadSpeeds.shift();
+                downloadSpeeds.push(downloadedSize - lastDownloadedSize);
 
-                operation.attempt(function() {
-                    agent.get(`/${entry}`).then((response) => {
-                        let hash = response.headers['m-integrity-hash'];
+                let averageDownloadSpeed = 0;
+                downloadSpeeds.forEach((speed) => averageDownloadSpeed += speed);
+                averageDownloadSpeed /= MAX_DOWNLOAD_SPEED_VALUES;
 
-                        if(hash && toDownload.has(hash)) {
-                            let file = toDownload.get(hash);
-                            let fstream = fs.createWriteStream(file);
+                let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
+                let downloadSizeFormatted = formatBytes(downloadedSize);
+                let downloadSpeedFormatted = formatBytes(averageDownloadSpeed) + "/s";
+                let timeRemaining = (averageDownloadSpeed <= 0 ? "infinite" : secondsToTime((toDownloadSize - downloadedSize) / averageDownloadSpeed));
+                lastDownloadedSize = downloadedSize;
+
+                let str = `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted} - ${downloadSpeedFormatted} - ETA: ${timeRemaining})`;
+                win.webContents.send('patchProgress', percentage, str, 2);
+            }, 1000);
+
+            let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
+            let downloadSizeFormatted = formatBytes(downloadedSize);
+            win.webContents.send('patchProgress', percentage, `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 2);
+
+            for(let { hash, path } of [...toDownload]) {
+                await new Promise((resolve, reject) => {
+                    cancellationSource = axios.CancelToken.source();
+                    let operation = retry.operation({
+                        retries: 5,
+                        factor: 2,
+                        minTimeout: 1 * 1000,
+                        maxTimeout: 5 * 1000
+                    });
+
+                    try {
+                        if(fs.existsSync(path))
+                            fs.unlinkSync(path);
+                    } catch(err) {
+                        reject(err);
+                    }
+
+                    operation.attempt(function() {
+                        agent.get(`/${path.replaceAll('\\', '/')}`, { cancelToken: cancellationSource.token }).then((response) => {
+                            let fstream = fs.createWriteStream(path, { mode: 0o777 });
+                            let thisDownloadedSize = 0;
                             response.data.pipe(fstream);
 
                             response.data.on('data', function(chunk) {
                                 downloadedSize += chunk.length;
+                                thisDownloadedSize += chunk.length;
                             });
 
                             response.data.on('end', function() {
                                 if(response.data.complete) {
-                                    downloadedFiles[file] = hash;
-                                    toDownload.delete(hash);
-                                } else if(!operation.retry(new Error('Connection interrupted'))) {
-                                    errorHandler(operation.mainError());
+                                    downloadedFiles[path] = hash;
+                                    toDownload.shift();
+                                    resolve();
+                                } else {
+                                    downloadedSize -= thisDownloadedSize;
+                                    if(!operation.retry(new Error('Connection interrupted'))) {
+                                        reject(operation.mainError());
+                                    }
                                 }
                             });
-                        } else if(!operation.retry(new Error('Received unexpected integrity hash'))) {
-                            errorHandler(operation.mainError());
-                        }
-                    }).catch((err) => {
-                        if(!axios.isCancel(err) && !operation.retry(err)) {
-                            errorHandler(operation.mainError());
-                        }
+                        }).catch((err) => {
+                            if(!axios.isCancel(err) && !operation.retry(err)) {
+                                reject(operation.mainError());
+                            } else if(axios.isCancel(err)) {
+                                reject(err);
+                            }
+                        });
                     });
                 });
-            });
-
-            patchProgressUpdate = setInterval(() => {
-                if(toDownload.size == 0) {
-                    manager.detach();
-                    clearInterval(patchProgressUpdate);
-                    win.webContents.send('patchProgress', 100, "Completed", true);
-
-                    fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, buildVersion: patchInfo.buildVersion }), (err) => {
-                        if(err) throw err;
-                    });
-                    return;
-                }
-
-                let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
-                let downloadSizeFormatted = formatBytes(downloadedSize);
-                let downloadSpeed = downloadedSize - lastDownloadedSize;
-                let downloadSpeedFormatted = formatBytes(downloadSpeed) + "/s";
-                let timeRemaining = (downloadSpeed == 0 ? "infinite" : secondsToTime((toDownloadSize - downloadedSize) / downloadSpeed));
-                lastDownloadedSize = downloadedSize;
-
-                let str = `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted} - ${downloadSpeedFormatted} - ETA: ${timeRemaining})`;
-                win.webContents.send('patchProgress', percentage, str, false);
-            }, 1000);
-        } else {
-            win.webContents.send('patchProgress', 100, "Completed", true);
-
-            fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, buildVersion: patchInfo.buildVersion }), (err) => {
-                if(err) throw err;
-            });
+            }
         }
-    } catch (err) {
+
         clearInterval(patchProgressUpdate);
-        win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, false);
+        win.webContents.send('patchProgress', 100, "Completed", 0);
+
+        fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, buildVersion }), (err) => {
+            if(err) throw err;
+        });
+    } catch(err) {
+        clearInterval(patchProgressUpdate);
+        if(axios.isCancel(err)) {
+            let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
+            let downloadSizeFormatted = formatBytes(downloadedSize);
+            let toDownloadSizeFormatted = formatBytes(toDownloadSize);
+            win.webContents.send('patchProgress', percentage, `Download paused ${percentage}%. (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 3);
+        } else
+            win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
     }
 }
 
@@ -205,7 +240,7 @@ function checkFileIntegrity(fileInfo) {
 }
 
 function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes <= 0) return '0 Bytes';
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
@@ -232,3 +267,5 @@ function secondsToTime(s) {
 
     return str + Math.floor(secs) + 's';
 }
+
+module.exports = { checkForUpdates, downloadFiles, pauseDownload: () => { cancellationSource.cancel('Download paused.') } }

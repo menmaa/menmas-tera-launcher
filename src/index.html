@@ -12,6 +12,7 @@
             TERA Proxy: <span id="proxyStatus" style="color: #f00">Stopped</span><img src="images/warning.svg" class="warning-icon"></img><br>
             <a href="#" id="toggleProxy">Start</a> | <a href="#" id="showConsole">Console</a> | <a href="#" id="showMods">Mods</a></div>
         <div class="control-buttons">
+            <a href="#" id="repair-btn" title="Repair Game"><svg style="fill: #fff" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m23.695 4.974c-.079-.25-.283-.44-.538-.502-.254-.062-.523.013-.708.198l-3.168 3.167-2.425-.694-.694-2.425 3.168-3.168c.186-.185.26-.454.198-.708-.062-.255-.252-.458-.502-.538-.64-.201-1.321-.304-2.026-.304-3.86 0-7 3.14-7 7 0 .817.137 1.606.408 2.352l-9.528 9.528c-.568.567-.88 1.32-.88 2.12s.312 1.553.88 2.12c.567.568 1.32.88 2.12.88s1.553-.312 2.12-.88l9.528-9.528c.746.271 1.535.408 2.352.408 3.86 0 7-3.14 7-7 0-.705-.103-1.386-.305-2.026z"/></svg></a>
             <a href="#" id="min-btn">-</a>
             <a href="#" id="close-btn">X</a>
         </div>
@@ -53,6 +54,13 @@
             <div id="consoleOutput" class="console-window"></div>
             <a href="javascript:;" id="consoleClear">X</a>
         </div>
+        <div class="repair-modal">
+            <div style="height: 100%; overflow: hidden; position: relative">
+                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Client Repair</h3>
+                <p style="font-size: 16px;">This will repair your client. Click OK to continue, or outside this box to cancel.</p>
+                <button id="repairModalButton" class="modal-button">OK</button>
+            </div>
+        </div>
     </div>
     <script>
         const { ipcRenderer, shell, remote } = require('electron');
@@ -83,11 +91,16 @@
         let loginModal = document.querySelector('.login-modal');
         let errorModal = document.querySelector('.error-modal');
         let consoleModal = document.querySelector('.console-modal');
+        let repairModal = document.querySelector('.repair-modal');
 
+        let patching = false;
+        let patchingPaused = false;
         let isLoggedIn = false;
         let proxyRunning = false;
 
         function init() {
+            document.getElementById("repair-btn").addEventListener("click", showRepairModal);
+
             document.getElementById("min-btn").addEventListener("click", (e) => {
                 ipcRenderer.send('window-minimize');
             });
@@ -99,6 +112,12 @@
 
             document.getElementById("launchGame").addEventListener("click", (e) => {
                 if(e.target.classList.contains('disabled')) return;
+
+                if(patching) {
+                    e.target.classList.add('disabled');
+                    ipcRenderer.send('patch-paused-state', !patchingPaused);
+                    return;
+                } 
 
                 showLoginModal();
 
@@ -118,8 +137,10 @@
             backdrop.addEventListener('click', function() {
                 hideLoginModal(true);
                 hideConsoleModal();
+                hideRepairModal();
             });
             document.getElementById('errorModalButton').addEventListener('click', hideErrorModal);
+            document.getElementById('repairModalButton').addEventListener('click', repairClient);
             document.getElementById('loginForm').addEventListener('submit', executeLoginRequest);
             document.getElementById('toggleProxy').addEventListener('click', toggleProxy);
             document.getElementById('showConsole').addEventListener('click', showConsoleModal);
@@ -179,6 +200,30 @@
             }, 100);
         }
 
+        function showRepairModal() {
+            if(document.getElementById('repair-btn').classList.contains('disabled')) return;
+
+            repairModal.style.display = "initial";
+            backdrop.style.display = "initial";
+
+            setTimeout(() => {
+                repairModal.style.transform = "scale(1)";
+                repairModal.style.opacity = 1;
+                backdrop.style.opacity = 0.7;
+            }, 10);
+        }
+
+        function hideRepairModal() {
+            repairModal.style.transform = "scale(0.85)";
+            repairModal.style.opacity = 0;
+            backdrop.style.opacity = 0;
+
+            setTimeout(() => {
+                repairModal.style.display = "none";
+                backdrop.style.display = "none";
+            }, 100);
+        }
+
         function showConsoleModal() {
             consoleModal.style.display = "initial";
             backdrop.style.display = "initial";
@@ -216,14 +261,47 @@
             shell.openPath(path.join(process.cwd(), 'proxy', 'mods'));
         }
 
-        ipcRenderer.on('patchProgress', (event, percentage, text, launchEnabled) => {
+        function repairClient()  {
+            hideRepairModal();
+            ipcRenderer.send('repair-client');
+        }
+
+        ipcRenderer.on('patchProgress', (event, percentage, text, launchButton = 0) => {
             document.getElementById('patchProgressBar').style.width = percentage + "%";
             document.getElementById('patchProgressText').innerHTML = text;
 
-            if(launchEnabled)
-                document.getElementById('launchGame').classList.remove('disabled');
-            else
-                document.getElementById('launchGame').classList.add('disabled');
+            switch(launchButton) {
+                case 0: {
+                    let launchGameBtn = document.getElementById('launchGame')
+                    launchGameBtn.classList.remove('disabled');
+                    launchGameBtn.innerHTML = "Play";
+                    patching = false;
+                    document.getElementById('repair-btn').classList.remove('disabled');
+                    break;
+                }
+                case 1: {
+                    let launchGameBtn = document.getElementById('launchGame')
+                    launchGameBtn.classList.add('disabled');
+                    launchGameBtn.innerHTML = "Play";
+                    patching = true;
+                    document.getElementById('repair-btn').classList.add('disabled');
+                    break;
+                }
+                case 2: {
+                    let launchGameBtn = document.getElementById('launchGame')
+                    launchGameBtn.classList.remove('disabled');
+                    launchGameBtn.innerHTML = "Pause";
+                    patchingPaused = false;
+                    break;
+                }
+                case 3: {
+                    let launchGameBtn = document.getElementById('launchGame')
+                    launchGameBtn.classList.remove('disabled');
+                    launchGameBtn.innerHTML = "Resume";
+                    patchingPaused = true;
+                    break;
+                }
+            }
         });
 
         async function executeLoginRequest() {
@@ -285,6 +363,7 @@
                 let launchGameBtn = document.getElementById("launchGame");
                 launchGameBtn.classList.add('disabled');
                 launchGameBtn.innerHTML = "Launching...";
+                document.getElementById('repair-btn').classList.add('disabled');
             } else if(err !== "request-cancel") {
                 document.getElementById('loginErrorMsg').innerHTML = err;
             }
@@ -309,6 +388,7 @@
             let launchGameBtn = document.getElementById("launchGame");
             launchGameBtn.classList.remove('disabled');
             launchGameBtn.innerHTML = "Play";
+            document.getElementById('repair-btn').classList.remove('disabled');
         });
 
         function logout() {
