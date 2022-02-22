@@ -18,6 +18,14 @@
         </div>
         <div class="account-info">Welcome, <span id="accountName"></span>!<br><a href="#" id="accountLogout">Log Out</a></div>
     </header>
+    <main>
+        <div id="promotionBanner" class="promotion-banner">
+            <div class="promotion-blur-container"></div>
+            <h2 id="promotionTitle" class="promotion-title"></h2>
+            <p id="promotionBody" class="promotion-body"></p>
+            <button id="promotionButton" class="promotion-button"></button>
+        </div>
+    </main>
     <footer>
         <div class="patch-progress">
             <div id="ppb" class="patch-progress-bar"><div id="patchProgressBar"></div></div>
@@ -25,6 +33,9 @@
         </div>
         <div class="launch-game">
             <button id="launchGame">Play</button>
+            <label style="position: absolute;bottom: 5px;left: 20px;right: 0;width: calc(100% - 20px);text-align: center;">
+                <input type="checkbox" id="startVulkan" style="margin: 3px"> Start with Vulkan (Beta) <span title="Vulkan is intended to offer higher performance and more balanced CPU and GPU usage.">(?)</span>
+            </label>
         </div>
     </footer>
     <div>
@@ -63,9 +74,6 @@
         </div>
     </div>
     <script>
-        const { ipcRenderer, shell, remote } = require('electron');
-        const path = require('path');
-
         const ERROR_MESSAGES = {
             5: "Termination Code 5: DirectX could not be found, is corrupt or an incorrect version is installed.",
             6: "Termination Code 6: The database contains invalid data.",
@@ -127,11 +135,11 @@
             });
 
             document.getElementById('createNewAccount').addEventListener("click", (e) => {
-                shell.openExternal("https://tera.menmasystems.com/register");
+                shell.openExternal("https://account.menmastera.com/register");
             });
 
             document.getElementById('passwordReset').addEventListener("click", (e) => {
-                shell.openExternal("https://tera.menmasystems.com/account/password_reset");
+                shell.openExternal("https://account.menmastera.com/account/password_reset");
             });
 
             backdrop.addEventListener('click', function() {
@@ -258,7 +266,7 @@
         }
 
         function showModsFolder() {
-            shell.openPath(path.join(process.cwd(), 'proxy', 'mods'));
+            shell.openProxyModsPath();
         }
 
         function repairClient()  {
@@ -346,12 +354,13 @@
             let submitLogin = document.getElementById('submitLogin');
             let loadingIcon = document.getElementById('loadingIcon');
             let errorMsg = document.getElementById('loginErrorMsg');
+            let startVulkan = document.getElementById('startVulkan').checked;
 
             errorMsg.innerHTML = "";
             submitLogin.classList.add('disabled');
             loadingIcon.style.display = "initial";
 
-            ipcRenderer.send('launchGame');
+            ipcRenderer.send('launchGame', startVulkan);
         }
 
         ipcRenderer.on('launchGameRes', (event, err) => {
@@ -489,6 +498,24 @@
             el.innerText = msg;
             contents.appendChild(el);
             contents.scrollTop = contents.scrollHeight;
+        });
+
+        ipcRenderer.on('promotionBannerInfo', (event, promo) => {
+            let promotionBanner = document.getElementById('promotionBanner');
+            let promotionTitle = document.getElementById('promotionTitle');
+            let promotionBody = document.getElementById('promotionBody');
+            let promotionButton = document.getElementById('promotionButton');
+
+            promotionTitle.innerHTML = promo.title;
+            promotionBody.innerHTML = promo.body;
+            promotionButton.innerHTML = promo.buttonText;
+            promotionBanner.style.backgroundImage = `url('${promo.backgroundImage}')`;
+
+            promotionButton.onclick = function() {
+                shell.openExternal(promo.buttonUrl);
+            };
+
+            promotionBanner.style.display = 'initial';
         });
     </script>
 </body>

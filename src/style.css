@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Love+Ya+Like+A+Sister&display=swap');
+@font-face {
+	font-family: 'Mairon';
+	src: url('fonts/Mairon-KYre.ttf');
+}
 
 * {
     box-sizing: border-box;
@@ -7,7 +10,6 @@
 body {
     background-image: url('images/Elin_BG_T3.png');
     color: white;
-    /* font-family: 'Love Ya Like A Sister', cursive; */
     font-family: 'Times New Roman', serif;
     height: 100vh;
     margin: 0;
@@ -17,6 +19,10 @@ body {
 header {
     -webkit-app-region: drag;
     overflow: hidden;
+    padding: 10px;
+}
+
+main {
     padding: 10px;
 }
 
@@ -87,13 +93,14 @@ footer {
     left: 0;
     right: 0;
     bottom: 0;
-    margin: 20px;
+    /* margin: 20px; */
     min-height: 60px;
 }
 
 .patch-progress {
     width: 70%;
     padding: 5px;
+    margin: 20px 0 20px 20px;
 }
 
 .patch-progress #patchProgressText {
@@ -124,6 +131,7 @@ footer {
 .launch-game {
     position: relative;
     width: 30%;
+    margin: 20px 20px 0 0;
 }
 
 #launchGame {
@@ -139,7 +147,7 @@ footer {
     left: 20px;
     right: 0;
     top: 0;
-    bottom: 0;
+    bottom: 25px;
     width: calc(100% - 20px);
 }
 
@@ -334,4 +342,58 @@ footer {
 
 .lm-footer a:hover {
     text-decoration: none;
+}
+
+.promotion-banner {
+    background-position: center;
+    background-size: 100%;
+    border-radius: 20px;
+    display: none;
+    color: black;
+    width: 600px;
+    padding: 20px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+}
+
+.promotion-title {
+    font-family: 'Mairon', serif;
+    font-size: 30px;
+    margin: 0;
+}
+
+.promotion-body {
+    font-size: 18px;
+    text-shadow: 1px 1px 5px white;
+}
+
+.promotion-blur-container {
+    background-color: white;
+    filter: blur(100px);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+}
+
+.promotion-button {
+    background: linear-gradient(0deg, rgba(83,52,18,1) 0%, rgba(173,111,40,1) 100%);
+    border: none;
+    outline: none;
+    color: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    margin-bottom: 0;
+    margin-top: 10px;
+    appearance: none;
+    width: 200px;
+    padding: 10px;
+    font-family: inherit;
+    border-radius: 5px;
 }

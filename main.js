@@ -1,8 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const keytar = require('keytar');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 const loginController = require('./login');
 const tl = require('./launcher');
-const path = require('path');
 const TeraProxy = require(path.join(process.cwd(), 'proxy/bin/proxy'));
 const patcher = require('./patcher');
 
@@ -24,9 +26,8 @@ function createWindow () {
         resizable: false,
         maximizable: false,
         webPreferences: {
-            contextIsolation: false,
-            nodeIntegration: true,
-            enableRemoteModule: true,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js'),
             devTools: false
         }
     });
@@ -83,6 +84,10 @@ function createWindow () {
             console.error(err);
         });
 
+        axios.get('https://account.menmastera.com/api/v1/launcher/retrieve_promo_info').then((response) => {
+            win.webContents.send('promotionBannerInfo', response.data);
+        }).catch((err) => { console.error(err.message) });
+
         patcher.checkForUpdates(win);
     });
 
@@ -106,9 +111,7 @@ function createWindow () {
 }
 
 app.whenReady().then(() => {
-    require('./update')(() => {
-        createWindow();
-    });
+    require('./update')(createWindow);
 });
 
 app.on('window-all-closed', () => {
@@ -160,9 +163,19 @@ ipcMain.on('abort-login-req', (event) => {
     loginController.cancelAllRequests();
 });
 
-ipcMain.on('launchGame', async (event) => {
+ipcMain.on('launchGame', async (event, startVulkan) => {
     try {
         gameStr = await loginController.getServerInfo(loginData.token);
+
+        let vulkanPathEnabled = path.join(process.cwd(), 'Client/Binaries/d3d9.dll');
+        let vulkanPathDisabled = path.join(process.cwd(), 'Client/Binaries/d3d9.dis');
+
+        if(startVulkan && !fs.existsSync(vulkanPathEnabled))
+            fs.renameSync(vulkanPathDisabled, vulkanPathEnabled);
+        else if(!startVulkan && !fs.existsSync(vulkanPathDisabled)) {
+            fs.renameSync(vulkanPathEnabled, vulkanPathDisabled);
+        }
+
         event.reply('launchGameRes', null);
 
         tl.launchGame(gameStr, (err) => {
