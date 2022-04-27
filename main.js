@@ -7,17 +7,15 @@ const loginController = require('./login');
 const tl = require('./launcher');
 const TeraProxy = require(path.join(process.cwd(), 'proxy/bin/proxy'));
 const patcher = require('./patcher');
-const installer = require('./installer');
 
 const KEYTAR_SERVICE_NAME = "MenmasTeraLauncherUwU";
 
 let MessageListener;
 let loginData;
 let gameStr;
-let patcherWay = 0;
+
 let win;
 let proxy;
-let legacyInstaller = (process.argv.includes("--MT_LEGACY_INSTALLER"));
 
 function createWindow () {
     win = new BrowserWindow({
@@ -90,15 +88,7 @@ function createWindow () {
             win.webContents.send('promotionBannerInfo', response.data);
         }).catch((err) => { console.error(err.message) });
 
-        if(legacyInstaller || fs.existsSync(path.join(process.cwd(), 'Client/build.json'))) {
-            patcher.checkForUpdates(win);
-            patcherWay = 1;
-        } else {
-            installer.startInstallation(win, () => {
-                patcher.checkForUpdates(win, true);
-            });
-            patcherWay = 2;
-        }
+        patcher.checkForUpdates(win);
     });
 
     // Redirect console to built-in one
@@ -198,13 +188,10 @@ ipcMain.on('launchGame', async (event, startVulkan) => {
 });
 
 ipcMain.on('patch-paused-state', (event, paused) => {
-    if(paused) {
-        if(patcherWay == 1) patcher.pauseDownload();
-        else if(patcherWay == 2) installer.pauseDownload();
-    } else {
-        if(patcherWay == 1) patcher.downloadFiles(win);
-        else if(patcherWay == 2) installer.startInstallation(win, () => { patcher.checkForUpdates(win, true) });
-    }
+    if(paused)
+        patcher.pauseDownload();
+    else
+        patcher.downloadFiles(win);
 });
 
 ipcMain.on('repair-client', (event) => {
