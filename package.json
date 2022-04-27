@@ -1,6 +1,6 @@
 {
   "name": "menmas-tera-launcher",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Menma's TERA Launcher",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "author": "Menma",
   "license": "UNLICENSED",
   "devDependencies": {
-    "electron": "^18.1.0",
+    "electron": "^11.5.0",
     "electron-builder": "^22.9.1"
   },
   "dependencies": {
