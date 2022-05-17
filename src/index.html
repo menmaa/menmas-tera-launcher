@@ -72,6 +72,13 @@
                 <button id="repairModalButton" class="modal-button">OK</button>
             </div>
         </div>
+        <div class="proxy-modal">
+            <div style="height: 100%; overflow: hidden; position: relative">
+                <h3 style="color: #ffce2c; border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Warning!</h3>
+                <p style="font-size: 16px;">The only officially supported proxy mods are the ones that are already pre-installed, as well as mods listed in our <a href="#" id="discordServerLink" style="color: white">discord server</a>'s #proxy-mods channel. Any other mod is considered unsupported. Cheats, scripts, hacks and/or software that provide an advantage over your co-players are strictly prohibited. Menma's TERA team reserves every right to ban your account from accessing the game indefinitely, if they determine usage of any kind of unsupported mods.</p>
+                <button id="proxyStartButton" class="modal-button">I understand the risks, please start proxy.</button>
+            </div>
+        </div>
     </div>
     <script>
         const ERROR_MESSAGES = {
@@ -100,6 +107,7 @@
         let errorModal = document.querySelector('.error-modal');
         let consoleModal = document.querySelector('.console-modal');
         let repairModal = document.querySelector('.repair-modal');
+        let proxyModal = document.querySelector('.proxy-modal');
 
         let patching = false;
         let patchingPaused = false;
@@ -142,15 +150,22 @@
                 shell.openExternal("https://account.menmastera.com/account/password_reset");
             });
 
+            document.getElementById('discordServerLink').addEventListener("click", (e) => {
+                shell.openExternal("https://discord.gg/menmastera");
+            });
+
             backdrop.addEventListener('click', function() {
                 hideLoginModal(true);
                 hideConsoleModal();
                 hideRepairModal();
+                hideErrorModal();
+                hideProxyModal();
             });
             document.getElementById('errorModalButton').addEventListener('click', hideErrorModal);
             document.getElementById('repairModalButton').addEventListener('click', repairClient);
             document.getElementById('loginForm').addEventListener('submit', executeLoginRequest);
             document.getElementById('toggleProxy').addEventListener('click', toggleProxy);
+            document.getElementById('proxyStartButton').addEventListener('click', startProxy);
             document.getElementById('showConsole').addEventListener('click', showConsoleModal);
             document.getElementById('showMods').addEventListener('click', showModsFolder);
             document.getElementById('consoleClear').addEventListener('click', clearConsoleContents);
@@ -415,21 +430,57 @@
             }
         };
 
+        function showProxyModal(event) {
+            proxyModal.style.display = "initial";
+            backdrop.style.display = "initial";
+
+            let contents = document.getElementById('consoleOutput');
+            contents.scrollTop = contents.scrollHeight;
+
+            setTimeout(() => {
+                proxyModal.style.transform = "scale(1)";
+                proxyModal.style.opacity = 1;
+                backdrop.style.opacity = 0.7;
+            }, 10);
+        }
+
+        function hideProxyModal() {
+            proxyModal.style.transform = "scale(0.85)";
+            proxyModal.style.opacity = 0;
+            backdrop.style.opacity = 0;
+
+            setTimeout(() => {
+                proxyModal.style.display = "none";
+                backdrop.style.display = "none";
+            }, 100);
+        }
+
         function toggleProxy(event) {
             let proxyStatus = document.getElementById('proxyStatus');
             let toggleButton = document.getElementById('toggleProxy');
-            proxyStatus.style.color = "yellow";
             
             if(proxyRunning) {
+                proxyStatus.style.color = "yellow";
                 proxyStatus.innerHTML = "Stopping...";
                 ipcRenderer.send('stopProxy');
             } else {
-                proxyStatus.innerHTML = "Starting...";
-                ipcRenderer.send('startProxy');
+                showProxyModal();
+                return;
             }
 
             toggleButton.style.pointerEvents = "none";
             toggleButton.style.color = "gray";
+        }
+
+        function startProxy(event) {
+            let proxyStatus = document.getElementById('proxyStatus');
+            let toggleButton = document.getElementById('toggleProxy');
+            proxyStatus.style.color = "yellow";
+            proxyStatus.innerHTML = "Starting...";
+            ipcRenderer.send('startProxy');
+            toggleButton.style.pointerEvents = "none";
+            toggleButton.style.color = "gray";
+            hideProxyModal();
         }
 
         ipcRenderer.on('proxy-running', (event, failedMods) => {

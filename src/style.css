@@ -165,6 +165,7 @@ footer {
     z-index: 1000;
 }
 
+.proxy-modal,
 .repair-modal,
 .console-modal,
 .error-modal,
@@ -193,6 +194,10 @@ footer {
     background-position-y: -100px;
     height: 200px;
     margin-top: -100px;
+}
+
+.proxy-modal {
+    background: #040728;
 }
 
 .modal-message {
