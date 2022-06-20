@@ -5,7 +5,7 @@ const https = require('https');
 const MultiStream = require('multistream');
 const unzipper = require('unzipper');
 
-const PATCH_HOSTNAME = 'cdn.menmastera.com';
+const PATCH_HOSTNAME = 'emilia.menmastera.com';
 const PATCH_PATH = '/download';
 const DOWNLOAD_PATH = path.join(process.cwd(), 'install_data');
 
@@ -70,7 +70,7 @@ async function startInstallation(win, callback) {
             for(let i = startingFileIndex; i < buildInfo.parts; i++) {
                 let part = buildInfo.fileList[i];
                 let dlPath = path.join(DOWNLOAD_PATH, part.name);
-                let fstream = fs.createWriteStream(dlPath, { flags: 'a' });
+                let fstream = fs.createWriteStream(dlPath, { flags: 'a+', start: lastOffset });
 
                 let reqOptions = {
                     agent,
@@ -134,11 +134,14 @@ async function startInstallation(win, callback) {
             win.webContents.send('patchProgress', percentage, `Extracting files ${percentage}%...`, 1);
         }
 
-        win.webContents.send('patchProgress', 100, 'Completed', 0);
+        win.webContents.send('patchProgress', 100, 'Cleaning up...', 1);
 
-        fs.rm(DOWNLOAD_PATH, { recursive: true, force: true }, (err) => {
-            fs.unlink(DOWNLOAD_PATH, () => {});
+        fs.readdirSync(DOWNLOAD_PATH).forEach((file) => {
+            fs.unlinkSync(path.join(DOWNLOAD_PATH, file));
         });
+        fs.rmdirSync(DOWNLOAD_PATH);
+
+        win.webContents.send('patchProgress', 100, 'Completed', 0);
 
         if(callback)
             callback();
@@ -150,7 +153,7 @@ async function startInstallation(win, callback) {
             let toDownloadSizeFormatted = formatBytes(toDownloadSize);
             win.webContents.send('patchProgress', percentage, `Download paused ${percentage}%. (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 3);
         } else {
-            win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
+            win.webContents.send('patchProgress', 0, `Failed to patch. Error Message: ${err.message}`, 1);
         }
     }
 }

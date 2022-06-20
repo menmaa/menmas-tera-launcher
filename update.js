@@ -5,7 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
-const UPDATE_URL = "https://menmastera.com/launcher/update/";
+const UPDATE_URL = "https://emilia.menmastera.com/launcher/";
 
 let win;
 let finishCallback;

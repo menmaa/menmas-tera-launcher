@@ -6,7 +6,7 @@ const https = require('https');
 const retry = require('retry');
 
 const MAX_DOWNLOAD_SPEED_VALUES = 10;
-const PATCH_URL = 'http://patch.menmastera.com';
+const PATCH_URL = 'https://emilia.menmastera.com/patch';
 
 let patchProgressUpdate;
 let downloadedFiles = {};

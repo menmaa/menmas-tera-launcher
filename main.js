@@ -9,7 +9,7 @@ const TeraProxy = require(path.join(process.cwd(), 'proxy/bin/proxy'));
 const patcher = require('./patcher');
 const installer = require('./installer');
 
-const KEYTAR_SERVICE_NAME = "MenmasTeraLauncherUwU";
+const KEYTAR_SERVICE_NAME = "MenmasTERA";
 
 let MessageListener;
 let loginData;
@@ -174,16 +174,6 @@ ipcMain.on('abort-login-req', (event) => {
 ipcMain.on('launchGame', async (event, startVulkan) => {
     try {
         gameStr = await loginController.getServerInfo(loginData.token);
-
-        let vulkanPathEnabled = path.join(process.cwd(), 'Client/Binaries/d3d9.dll');
-        let vulkanPathDisabled = path.join(process.cwd(), 'Client/Binaries/d3d9.dis');
-
-        if(startVulkan && !fs.existsSync(vulkanPathEnabled))
-            fs.renameSync(vulkanPathDisabled, vulkanPathEnabled);
-        else if(!startVulkan && !fs.existsSync(vulkanPathDisabled)) {
-            fs.renameSync(vulkanPathEnabled, vulkanPathDisabled);
-        }
-
         event.reply('launchGameRes', null);
 
         tl.launchGame(gameStr, (err) => {
