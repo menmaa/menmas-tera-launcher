@@ -10,8 +10,18 @@
         <img src="images/MenmasTera.png" class="tera-logo">
         <div class="proxy-info">
             TERA Proxy: <span id="proxyStatus" style="color: #f00">Stopped</span><img src="images/warning.svg" class="warning-icon"></img><br>
-            <a href="#" id="toggleProxy">Start</a> | <a href="#" id="showConsole">Console</a> | <a href="#" id="showMods">Mods</a></div>
+            <a href="#" id="toggleProxy">Start</a> | <a href="#" id="showConsole">Console</a> | <a href="#" id="showMods">Mods</a>
+        </div>
         <div class="control-buttons">
+            <div class="lang-dropdown">
+                <a href="#" id="toggleLangDropdown" title="Game Language"><img src="images/lang/uk.png" id="selectedLangImg" width="24" height="24"></a>
+                <div id="langDropdownContent" class="dropdown-content">
+                    <a href="#" class="lang-selector" data-lang="uk"><img src="images/lang/uk.png" class="lang-img" width="24" height="24"> English</a>
+                    <a href="#" class="lang-selector" data-lang="de"><img src="images/lang/de.png" class="lang-img" width="24" height="24"> Deutsch</a>
+                    <a href="#" class="lang-selector" data-lang="fr"><img src="images/lang/fr.png" class="lang-img" width="24" height="24"> Français</a>
+                    <a href="#" class="lang-selector" data-lang="ru"><img src="images/lang/ru.png" class="lang-img" width="24" height="24"> Русский</a>
+                </div>
+            </div>
             <a href="#" id="repair-btn" title="Repair Game"><svg style="fill: #fff" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m23.695 4.974c-.079-.25-.283-.44-.538-.502-.254-.062-.523.013-.708.198l-3.168 3.167-2.425-.694-.694-2.425 3.168-3.168c.186-.185.26-.454.198-.708-.062-.255-.252-.458-.502-.538-.64-.201-1.321-.304-2.026-.304-3.86 0-7 3.14-7 7 0 .817.137 1.606.408 2.352l-9.528 9.528c-.568.567-.88 1.32-.88 2.12s.312 1.553.88 2.12c.567.568 1.32.88 2.12.88s1.553-.312 2.12-.88l9.528-9.528c.746.271 1.535.408 2.352.408 3.86 0 7-3.14 7-7 0-.705-.103-1.386-.305-2.026z"/></svg></a>
             <a href="#" id="min-btn">-</a>
             <a href="#" id="close-btn">X</a>
@@ -28,14 +38,15 @@
     </main>
     <footer>
         <div class="patch-progress">
-            <div id="ppb" class="patch-progress-bar"><div id="patchProgressBar"></div></div>
+            <div class="patch-progress-inner">
+                <div id="ppb" class="patch-progress-bar">
+                    <div id="patchProgressBar"></div>
+                </div>
+            </div>
             <label id="patchProgressText" for="ppb">Completed</label>
         </div>
         <div class="launch-game">
             <button id="launchGame">Play</button>
-            <label style="position: absolute;bottom: 5px;left: 20px;right: 0;width: calc(100% - 20px);text-align: center;">
-                <input type="checkbox" id="startVulkan" style="margin: 3px"> Start with Vulkan (Beta) <span title="Vulkan is intended to offer higher performance and more balanced CPU and GPU usage.">(?)</span>
-            </label>
         </div>
     </footer>
     <div>
@@ -161,6 +172,19 @@
                 hideErrorModal();
                 hideProxyModal();
             });
+
+            window.addEventListener('click', function(event) {
+                if(!event.target.matches('#selectedLangImg'))
+                    document.getElementById('langDropdownContent').style.display = "";
+                else
+                    document.getElementById('langDropdownContent').style.display = "block";
+            });
+
+
+            for(let el of document.getElementsByClassName('lang-selector')) {
+                el.addEventListener('click', selectLanguage);
+            }
+
             document.getElementById('errorModalButton').addEventListener('click', hideErrorModal);
             document.getElementById('repairModalButton').addEventListener('click', repairClient);
             document.getElementById('loginForm').addEventListener('submit', executeLoginRequest);
@@ -171,6 +195,10 @@
             document.getElementById('consoleClear').addEventListener('click', clearConsoleContents);
             document.getElementById('accountLogout').addEventListener('click', logout);
         };
+
+        function selectLanguage(event) {
+            ipcRenderer.send('switchLanguage', this.dataset.lang);
+        }
 
         function showLoginModal() {
             loginModal.style.display = "initial";
@@ -289,6 +317,10 @@
             ipcRenderer.send('repair-client');
         }
 
+        ipcRenderer.on('switchLanguage', (event, lang) => {
+            document.getElementById('selectedLangImg').src = "images/lang/" + lang + ".png";
+        });
+
         ipcRenderer.on('patchProgress', (event, percentage, text, launchButton = 0) => {
             document.getElementById('patchProgressBar').style.width = percentage + "%";
             document.getElementById('patchProgressText').innerHTML = text;
@@ -369,13 +401,12 @@
             let submitLogin = document.getElementById('submitLogin');
             let loadingIcon = document.getElementById('loadingIcon');
             let errorMsg = document.getElementById('loginErrorMsg');
-            let startVulkan = document.getElementById('startVulkan').checked;
 
             errorMsg.innerHTML = "";
             submitLogin.classList.add('disabled');
             loadingIcon.style.display = "initial";
 
-            ipcRenderer.send('launchGame', startVulkan);
+            ipcRenderer.send('launchGame');
         }
 
         ipcRenderer.on('launchGameRes', (event, err) => {

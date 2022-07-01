@@ -8,7 +8,8 @@
 }
 
 body {
-    background-image: url('images/Elin_BG_T3.png');
+    background-image: url('images/bg.webp');
+    background-size: 100%;
     color: white;
     font-family: 'Times New Roman', serif;
     height: 100vh;
@@ -18,7 +19,7 @@ body {
 
 header {
     -webkit-app-region: drag;
-    overflow: hidden;
+    min-height: 80px;
     padding: 10px;
 }
 
@@ -40,6 +41,7 @@ main {
 .control-buttons {
     float: right;
     margin: 10px;
+    text-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
 }
 
 .control-buttons a {
@@ -69,6 +71,7 @@ main {
 .proxy-info {
     float: left;
     margin: 10px;
+    text-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
 }
 
 .proxy-info a {
@@ -98,15 +101,20 @@ footer {
 }
 
 .patch-progress {
-    width: 70%;
+    width: 75%;
     padding: 5px;
     margin: 20px 0 20px 20px;
+}
+
+.patch-progress-inner {
+    border-radius: 5px;;
+    box-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
 }
 
 .patch-progress #patchProgressText {
     display: block;
     min-height: 35px;
-    text-shadow: 1px 1px 1px black;
+    text-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
 }
 
 .patch-progress-bar {
@@ -130,7 +138,7 @@ footer {
 
 .launch-game {
     position: relative;
-    width: 30%;
+    width: 25%;
     margin: 20px 20px 0 0;
 }
 
@@ -148,6 +156,7 @@ footer {
     right: 0;
     top: 0;
     bottom: 25px;
+    box-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
     width: calc(100% - 20px);
 }
 
@@ -363,6 +372,7 @@ footer {
     left: 50%;
     transform: translate(-50%, -50%);
     overflow: hidden;
+    box-shadow: -1px -1px 5px #000, -1px 1px 5px #000, 1px -1px 5px #000, 1px 1px 5px #000;
 }
 
 .promotion-title {
@@ -401,4 +411,39 @@ footer {
     padding: 10px;
     font-family: inherit;
     border-radius: 5px;
+}
+
+.lang-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #272727;
+    z-index: 1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.dropdown-content a {
+    display: flex;
+    font-size: 16px;
+    align-items: center;
+    padding: 5px 10px;
+    margin: 0;
+    transition: all .1s ease-in-out;
+}
+
+.dropdown-content a:hover {
+    background-color: #fff;
+    color: #000;
+    text-shadow: none;
+}
+
+.lang-img {
+    margin-right: 10px;
+    width: 24px;
+    height: 24px;
 }
