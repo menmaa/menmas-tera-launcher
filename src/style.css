@@ -100,7 +100,7 @@ footer {
 .patch-progress {
     width: 70%;
     padding: 5px;
-    margin: 20px 0 20px 20px;
+    margin: 50px 0 20px 20px;
 }
 
 .patch-progress #patchProgressText {
@@ -131,7 +131,7 @@ footer {
 .launch-game {
     position: relative;
     width: 30%;
-    margin: 20px 20px 0 0;
+    margin: 50px 20px 0 0;
 }
 
 #launchGame {
@@ -401,4 +401,28 @@ footer {
     padding: 10px;
     font-family: inherit;
     border-radius: 5px;
+}
+
+.predownload-progress {
+    position: absolute;
+    margin-left: 30px;
+}
+
+.predownload-progress > p {
+    margin: 0;
+    text-shadow: -1px -1px 2px #000, -1px 1px 2px #000, 1px -1px 2px #000, 1px 1px 2px #000;
+}
+
+.predownload-progress a {
+    color: white;
+    font-size: 20px;
+}
+
+.predownload-progress a:hover {
+    text-decoration: none;
+}
+
+.predownload-progress a.disabled {
+    color: gray;
+    text-decoration: none;
 }

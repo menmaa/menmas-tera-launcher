@@ -2,10 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const https = require('https');
-const MultiStream = require('multistream');
-const unzipper = require('unzipper');
+const crypto = require('crypto');
 
-const PATCH_HOSTNAME = 'cdn.menmastera.com';
+const PATCH_HOSTNAME = 'emilia.menmastera.com';
 const PATCH_PATH = '/download';
 const DOWNLOAD_PATH = path.join(process.cwd(), 'install_data');
 
@@ -14,17 +13,16 @@ let agent = new https.Agent({
     keepAlive: true,
     maxSockets: 1,
     keepAliveMsecs: 5000,
-    timeout: 5000
+    timeout: 20000
 });
 
 async function startInstallation(win, callback) {
-    win.webContents.send('patchProgress', 100, "Retrieving patch information...", 1);
+    win.webContents.send('predownloadProgress', 100, "Retrieving Information...", 4);
 
     let downloadedSize = 0;
     let toDownloadSize = 0;
     let patchProgressUpdate;
     let lastOffset = 0;
-    let lastDownloadedSize = 0;
     let startingFileIndex = 0;
 
     try {
@@ -34,43 +32,81 @@ async function startInstallation(win, callback) {
             fs.mkdirSync(DOWNLOAD_PATH);
 
         toDownloadSize = buildInfo.totalSize;
-        let toDownloadSizeFormatted = formatBytes(toDownloadSize);
+
+        win.webContents.send('predownloadProgress', 100, "Checking existing files. Please wait. This may take a while...", 4);
 
         for(; startingFileIndex < buildInfo.fileList.length; startingFileIndex++) {
             let filePath = path.join(DOWNLOAD_PATH, buildInfo.fileList[startingFileIndex].name);
-
-            if(!fs.existsSync(filePath)) {
+            if(!fs.existsSync(filePath))
                 break;
-            }
 
             let fileSize = fs.statSync(filePath).size;
+            if(fileSize < 2)
+                break;
+
             downloadedSize += fileSize;
 
             if(fileSize < buildInfo.fileList[startingFileIndex].size) {
-                lastOffset = fileSize;
+                let res = await axios.get(`https://${PATCH_HOSTNAME + PATCH_PATH}/${buildInfo.fileList[startingFileIndex].sha1}`, {
+                    responseType: 'arraybuffer',
+                    headers: { 'Range': `bytes=0-${fileSize-1}` }
+                });
+
+                let hash1 = crypto.createHash('sha1').update(res.data).digest('hex');
+                let hash2 = crypto.createHash('sha1').update(fs.readFileSync(filePath)).digest('hex');
+
+                if(hash1 === hash2) {
+                    lastOffset = fileSize;
+                } else {
+                    lastOffset = 0;
+                    downloadedSize -= fileSize;
+                }
                 break;
+            } else if(fileSize > buildInfo.fileList[startingFileIndex].size) {
+                lastOffset = 0;
+                downloadedSize -= fileSize;
+                fs.writeFileSync(filePath, Buffer.allocUnsafe(0));
+                break;
+            } else {
+                let same = await new Promise((resolve, reject) => {
+                    fs.readFile(filePath, (err, data) => {
+                        if(err)
+                            reject(err);
+
+                        let hash = crypto.createHash('sha1').update(data).digest('hex');
+                        resolve(hash === buildInfo.fileList[startingFileIndex].sha1);
+                    });
+                });
+
+                if(!same) {
+                    lastOffset = 0;
+                    downloadedSize -= fileSize;
+                    break;
+                }
             }
         }
 
         if(downloadedSize < toDownloadSize) {
             patchProgressUpdate = setInterval(() => {
-                let downloadSpeed = downloadedSize - lastDownloadedSize;
                 let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
                 let downloadSizeFormatted = formatBytes(downloadedSize);
-                let downloadSpeedFormatted = formatBytes(downloadSpeed) + "/s";
-                let timeRemaining = (downloadSpeed <= 0 ? "infinite" : secondsToTime((toDownloadSize - downloadedSize) / downloadSpeed));
-                lastDownloadedSize = downloadedSize;
+                let toDownloadSizeFormatted = formatBytes(toDownloadSize);
 
-                let str = `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted} - ${downloadSpeedFormatted} - ETA: ${timeRemaining})`;
-                win.webContents.send('patchProgress', percentage, str, 2);
+                let str = `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted})`;
+                win.webContents.send('predownloadProgress', percentage, str, 2);
             }, 1000);
 
-            win.webContents.send('patchProgress', 0, 'Downloading Files...', 2);
+            win.webContents.send('predownloadProgress', 0, 'Downloading Files...', 2);
 
             for(let i = startingFileIndex; i < buildInfo.parts; i++) {
                 let part = buildInfo.fileList[i];
                 let dlPath = path.join(DOWNLOAD_PATH, part.name);
-                let fstream = fs.createWriteStream(dlPath, { flags: 'a' });
+
+                if(!fs.existsSync(dlPath)) {
+                    fs.writeFileSync(dlPath, Buffer.allocUnsafe(0));
+                }
+
+                let fstream = fs.createWriteStream(dlPath, { flags: 'r+', start: lastOffset });
 
                 let reqOptions = {
                     agent,
@@ -110,35 +146,14 @@ async function startInstallation(win, callback) {
                 });
 
                 lastOffset = 0;
+                await verifyIntegrity(part.sha1, dlPath);
             }
 
             clearInterval(patchProgressUpdate);
         }
 
-        win.webContents.send('patchProgress', 0, 'Extracting files 0.00%...', 1);
-
-        let partList = buildInfo.fileList.map((part) => fs.createReadStream(path.join(DOWNLOAD_PATH, part.name)));
-        let zipFile = new MultiStream(partList).pipe(unzipper.Parse({ forceStream: true }));
-        let amount = buildInfo.entryCount, i = 1;
-
-        for await (let entry of zipFile) {
-            if(entry.type == 'Directory') {
-                if(!fs.existsSync(entry.path))
-                    fs.mkdirSync(entry.path, { recursive: true });
-                entry.autodrain();
-            } else if(entry.type == 'File') {
-                entry.pipe(fs.createWriteStream(path.join(process.cwd(), entry.path)));
-            }
-
-            let percentage = (Math.trunc((i++) / amount * 10000) / 100).toFixed(2);
-            win.webContents.send('patchProgress', percentage, `Extracting files ${percentage}%...`, 1);
-        }
-
-        win.webContents.send('patchProgress', 100, 'Completed', 0);
-
-        fs.rm(DOWNLOAD_PATH, { recursive: true, force: true }, (err) => {
-            fs.unlink(DOWNLOAD_PATH, () => {});
-        });
+        win.webContents.send('predownloadProgress', 100, 'Predownload Completed', 4);
+        fs.writeFileSync(path.join(DOWNLOAD_PATH, 'dl_complete'), Buffer.allocUnsafe(0));
 
         if(callback)
             callback();
@@ -148,9 +163,9 @@ async function startInstallation(win, callback) {
             let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
             let downloadSizeFormatted = formatBytes(downloadedSize);
             let toDownloadSizeFormatted = formatBytes(toDownloadSize);
-            win.webContents.send('patchProgress', percentage, `Download paused ${percentage}%. (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 3);
+            win.webContents.send('predownloadProgress', percentage, `Download paused ${percentage}%. (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 3);
         } else {
-            win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
+            win.webContents.send('predownloadProgress', 0, `Failed to download. Error Message: ${err.message}`, 1);
         }
     }
 }
@@ -183,21 +198,21 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat(bytes / Math.pow(k, i)).toFixed(dm) + ' ' + sizes[i];
 }
 
-function secondsToTime(s) {
-    let secs = s % 60;
-    s = (s - secs) / 60;
-    let mins = s % 60;
-    let hrs = (s - mins) / 60;
-  
-    let str = "";
+function verifyIntegrity(expectedHash, filePath) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, (err, data) => {
+            if(err)
+                reject(err);
 
-    if(hrs > 0)
-        str += hrs + "h, ";
+            let hash = crypto.createHash('sha1').update(data).digest('hex');
 
-    if(mins > 0)
-        str += mins + "m, ";
+            if(hash !== expectedHash) {
+                reject(new Error('Integrity Verification failed for file ' + path.basename(filePath) + '. Please restart download.'));
+            }
 
-    return str + Math.floor(secs) + 's';
+            resolve();
+        });
+    });
 }
 
 class DownloadPauseError extends Error {

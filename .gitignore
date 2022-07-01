@@ -2,6 +2,7 @@ build/*
 Client/*
 node_modules/*
 release/*
+install_data/*
 Teralauncher.dll
 MTLUpdater.exe
 mtl.ini
