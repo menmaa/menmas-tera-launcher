@@ -7,16 +7,16 @@ const loginController = require('./login');
 const tl = require('./launcher');
 const patcher = require('./patcher');
 const installer = require('./installer');
-const TeraProxy = require(path.join(app.getAppPath(), 'proxy/bin/proxy'));
+const TeraProxy = require(path.join(process.cwd(), 'proxy/bin/proxy'));
 
 const config = (function() {
     try {
-        return require(path.join(app.getAppPath(), 'config.json'));
+        return require(path.join(process.cwd(), 'config.json'));
     } catch (e) {
         let defaultCfg = {
-            gameLang: "en"
+            gameLang: "uk"
         };
-        fs.writeFileSync(path.join(app.getAppPath(), 'config.json'), JSON.stringify(defaultCfg, null, 4));
+        fs.writeFileSync(path.join(process.cwd(), 'config.json'), JSON.stringify(defaultCfg, null, 4));
         return defaultCfg;
     }
 })();
@@ -154,7 +154,7 @@ function log(msg, type) {
 
 ipcMain.on('switchLanguage', (event, lang) => {
     config.gameLang = lang;
-    fs.writeFileSync(path.join(app.getAppPath(), 'config.json'), JSON.stringify(config, null, 4));
+    fs.writeFileSync(path.join(process.cwd(), 'config.json'), JSON.stringify(config, null, 4));
     win.webContents.send('switchLanguage', lang);
 });
 
