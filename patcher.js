@@ -4,6 +4,7 @@ const axios = require('axios');
 const http = require('http');
 const https = require('https');
 const retry = require('retry');
+const strings = require('./strings.json');
 
 const MAX_DOWNLOAD_SPEED_VALUES = 10;
 const PATCH_URL = 'https://emilia.menmastera.com/patch';
@@ -38,7 +39,7 @@ async function checkForUpdates(win, skipCheck = false) {
     downloadedSize = 0;
     lastDownloadedSize = 0;
 
-    win.webContents.send('patchProgress', 100, "Checking for updates...", 1);
+    updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_CHECK_FOR_UPDATES", 100);
 
     try {
         if(fs.existsSync("Client/build.json") && !skipCheck) {
@@ -55,11 +56,12 @@ async function checkForUpdates(win, skipCheck = false) {
             downloadedFiles = Object.assign({}, buildData.files);
         }
 
-        win.webContents.send('patchProgress', 100, "Retrieving patch information...", 1);
+        updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_RETRIEVING_INFO", 100);
+
         let patchInfo = await getLatestBuildInfo();
         buildVersion = patchInfo.buildVersion;
         
-        win.webContents.send('patchProgress', 0, "Checking existing files...", 1);
+        updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_CHECKING_EXISTING", 0);
 
         for (let i in patchInfo.entries) {
             let entry = patchInfo.entries[i];
@@ -81,14 +83,14 @@ async function checkForUpdates(win, skipCheck = false) {
             } else downloadedFiles[entry.file] = entry.sha1;
 
             let percentage = (Math.trunc(i / patchInfo.entries.length * 10000) / 100).toFixed(2);
-            win.webContents.send('patchProgress', percentage, `Checking existing files ${percentage}%...`, 1);
+            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_CHECKING_EXISTING", percentage);
         }
         toDownloadSizeFormatted = formatBytes(toDownloadSize);
 
         downloadFiles(win);
     } catch (err) {
         clearInterval(patchProgressUpdate);
-        win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
+        updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
     }
 }
 
@@ -111,13 +113,8 @@ async function downloadFiles(win) {
                 let timeRemaining = (averageDownloadSpeed <= 0 ? "infinite" : secondsToTime((toDownloadSize - downloadedSize) / averageDownloadSpeed));
                 lastDownloadedSize = downloadedSize;
 
-                let str = `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted} - ${downloadSpeedFormatted} - ETA: ${timeRemaining})`;
-                win.webContents.send('patchProgress', percentage, str, 2);
+                updatePatchProgress(win, 2, 'UI_TEXT_PATCH_PROGRESS_DOWNLOADING_FILES', percentage, downloadSizeFormatted, toDownloadSizeFormatted, downloadSpeedFormatted, timeRemaining);
             }, 1000);
-
-            let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
-            let downloadSizeFormatted = formatBytes(downloadedSize);
-            win.webContents.send('patchProgress', percentage, `Downloading Files ${percentage}%... (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 2);
 
             for(let { hash, path } of [...toDownload]) {
                 await new Promise((resolve, reject) => {
@@ -172,7 +169,7 @@ async function downloadFiles(win) {
         }
 
         clearInterval(patchProgressUpdate);
-        win.webContents.send('patchProgress', 100, "Completed", 0);
+        updatePatchProgress(win, 0, "UI_TEXT_PATCH_PROGRESS_COMPLETED");
 
         fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, buildVersion }), (err) => {
             if(err) throw err;
@@ -183,10 +180,31 @@ async function downloadFiles(win) {
             let percentage = (Math.trunc(downloadedSize / toDownloadSize * 10000) / 100).toFixed(2);
             let downloadSizeFormatted = formatBytes(downloadedSize);
             let toDownloadSizeFormatted = formatBytes(toDownloadSize);
-            win.webContents.send('patchProgress', percentage, `Download paused ${percentage}%. (${downloadSizeFormatted}/${toDownloadSizeFormatted})`, 3);
+            updatePatchProgress(win, 3, "UI_TEXT_PATCH_PROGRESS_DOWNLOAD_PAUSED", percentage, downloadSizeFormatted, toDownloadSizeFormatted);
         } else
-            win.webContents.send('patchProgress', 0, `Failed to patch. Please check your internet connection and try again. (${err.message})`, 1);
+            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
     }
+}
+
+function updatePatchProgress(win, status, stringId, percentage = 100, downloadSize, totalSize, downloadSpeed, timeRemaining, errorMessage) {
+    global.patchStatus.status = status;
+    global.patchStatus.stringId = stringId;
+    global.patchStatus.percentage = percentage;
+    global.patchStatus.downloadSize = downloadSize;
+    global.patchStatus.totalSize = totalSize;
+    global.patchStatus.downloadSpeed = downloadSpeed;
+    global.patchStatus.timeRemaining = timeRemaining;
+    global.patchStatus.errorMessage = errorMessage;
+
+    let str = strings[config.lang][stringId]
+            .replace('${percentage}', percentage)
+            .replace('${downloadSize}', downloadSize)
+            .replace('${totalSize}', totalSize)
+            .replace('${downloadSpeed}', downloadSpeed)
+            .replace('${timeRemaining}', timeRemaining)
+            .replace('${errorMessage}', errorMessage);
+
+    win.webContents.send('patchProgress', percentage, str, status);
 }
 
 function getLatestBuildVersion() {

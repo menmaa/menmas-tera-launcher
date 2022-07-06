@@ -8,18 +8,30 @@ const tl = require('./launcher');
 const patcher = require('./patcher');
 const installer = require('./installer');
 const TeraProxy = require(path.join(process.cwd(), 'proxy/bin/proxy'));
+const strings = require('./strings.json');
 
-const config = (function() {
+global.config = (function() {
     try {
         return require(path.join(process.cwd(), 'config.json'));
     } catch (e) {
         let defaultCfg = {
-            gameLang: "uk"
+            lang: "uk"
         };
         fs.writeFileSync(path.join(process.cwd(), 'config.json'), JSON.stringify(defaultCfg, null, 4));
         return defaultCfg;
     }
 })();
+
+global.patchStatus = {
+    status: 0,
+    stringId: "UI_TEXT_PATCH_PROGRESS_COMPLETED",
+    percentage: 100,
+    downloadedSize: null,
+    totalSize: null,
+    downloadSpeed: null,
+    timeRemaining: null,
+    errorMessage: null
+};
 
 const KEYTAR_SERVICE_NAME = "MenmasTERA";
 
@@ -42,11 +54,11 @@ function createWindow () {
         webPreferences: {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
-            devTools: true
+            devTools: true,
         }
     });
 
-    win.loadFile('src/index.html');
+    win.loadURL(`file://${__dirname}/src/index.html?lang=${global.config.lang}`);
 
     MessageListener = tl.registerMessageListener((message, code) => {
         //console.log(`Received message: ${message}(${code})`);
@@ -85,32 +97,43 @@ function createWindow () {
         }
     });
 
+    keytar.findCredentials(KEYTAR_SERVICE_NAME).then((result) => {
+        if(result[0]) {
+            loginData = {
+                username: result[0].account,
+                token: result[0].password
+            };
+        }
+    }).catch((err) => {
+        console.error(err);
+    });
+
+    if(legacyInstaller || fs.existsSync(path.join(process.cwd(), 'Client/build.json'))) {
+        patcher.checkForUpdates(win);
+        patcherWay = 1;
+    } else {
+        installer.startInstallation(win, () => { patcher.checkForUpdates(win, true) });
+        patcherWay = 2;
+    }
+
     win.webContents.on('dom-ready', async () => {
-        keytar.findCredentials(KEYTAR_SERVICE_NAME).then((result) => {
-            if(result[0]) {
-                loginData = {
-                    username: result[0].account,
-                    token: result[0].password
-                };
-                win.webContents.send('loginResponse', null, loginData.username, false);
-            }
-        }).catch((err) => {
-            console.error(err);
-        });
+        if(loginData) {
+            win.webContents.send('loginResponse', null, loginData.username, false);
+        }
+
+        let str = strings[config.lang][global.patchStatus.stringId]
+                .replace('${percentage}', global.patchStatus.percentage)
+                .replace('${downloadSize}', global.patchStatus.downloadSize)
+                .replace('${totalSize}', global.patchStatus.totalSize)
+                .replace('${downloadSpeed}', global.patchStatus.downloadSpeed)
+                .replace('${timeRemaining}', global.patchStatus.timeRemaining)
+                .replace('${errorMessage}', global.patchStatus.errorMessage);
+
+        win.webContents.send('patchProgress', global.patchStatus.percentage, str, global.patchStatus.status);
 
         axios.get('https://account.menmastera.com/api/v1/launcher/retrieve_promo_info').then((response) => {
             win.webContents.send('promotionBannerInfo', response.data);
         }).catch((err) => { console.error(err.message) });
-
-        win.webContents.send('switchLanguage', config.gameLang);
-
-        if(legacyInstaller || fs.existsSync(path.join(process.cwd(), 'Client/build.json'))) {
-            patcher.checkForUpdates(win);
-            patcherWay = 1;
-        } else {
-            installer.startInstallation(win, () => { patcher.checkForUpdates(win, true) });
-            patcherWay = 2;
-        }
     });
 
     // Redirect console to built-in one
@@ -153,9 +176,9 @@ function log(msg, type) {
 }
 
 ipcMain.on('switchLanguage', (event, lang) => {
-    config.gameLang = lang;
+    config.lang = lang;
     fs.writeFileSync(path.join(process.cwd(), 'config.json'), JSON.stringify(config, null, 4));
-    win.webContents.send('switchLanguage', lang);
+    win.loadURL(`file://${__dirname}/src/index.html?lang=${global.config.lang}`);
 });
 
 ipcMain.on('loginRequest', async (event, username, password, rememberMe) => {
@@ -196,7 +219,7 @@ ipcMain.on('launchGame', async (event) => {
         gameStr = await loginController.getServerInfo(loginData.token);
         event.reply('launchGameRes', null);
 
-        tl.launchGame(gameStr, config.gameLang, (err) => {
+        tl.launchGame(gameStr, config.lang, (err) => {
             if(err) throw err;
             event.reply('exitGame');
         });

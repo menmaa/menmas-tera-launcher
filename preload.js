@@ -1,5 +1,6 @@
 const { contextBridge, ipcRenderer, shell } = require('electron');
 const path = require('path');
+const strings = require('./strings.json');
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
     send: (channel, ...arg) => ipcRenderer.send(channel, ...arg),
@@ -11,3 +12,5 @@ contextBridge.exposeInMainWorld('shell', {
     openProxyModsPath: () => shell.openPath(path.join(process.cwd(), 'proxy', 'mods')),
     openExternal: (url) => shell.openExternal(url)
 });
+
+contextBridge.exposeInMainWorld('strings', strings);

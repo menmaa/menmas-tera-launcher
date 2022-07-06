@@ -4,13 +4,17 @@
     <title>Menma's TERA</title>
     <link rel="stylesheet" type="text/css" href="style.css">
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        window.language = params.get('lang');
+    </script>
 </head>
 <body>
     <header>
         <img src="images/MenmasTera.png" class="tera-logo">
         <div class="proxy-info">
-            TERA Proxy: <span id="proxyStatus" style="color: #f00">Stopped</span><img src="images/warning.svg" class="warning-icon"></img><br>
-            <a href="#" id="toggleProxy">Start</a> | <a href="#" id="showConsole">Console</a> | <a href="#" id="showMods">Mods</a>
+            TERA Proxy: <span id="proxyStatus" data-string-id="UI_TEXT_TP_STATUS_STOPPED" style="color: #f00">UI_TEXT_TP_STATUS_STOPPED</span><img src="images/warning.svg" class="warning-icon"></img><br>
+            <a href="#" id="toggleProxy" data-string-id="UI_TEXT_TP_START">UI_TEXT_TP_START</a> | <a href="#" id="showConsole" data-string-id="UI_TEXT_TP_CONSOLE">UI_TEXT_TP_CONSOLE</a> | <a href="#" id="showMods" data-string-id="UI_TEXT_TP_MODS">UI_TEXT_TP_MODS</a>
         </div>
         <div class="control-buttons">
             <div class="lang-dropdown">
@@ -26,7 +30,7 @@
             <a href="#" id="min-btn">-</a>
             <a href="#" id="close-btn">X</a>
         </div>
-        <div class="account-info">Welcome, <span id="accountName"></span>!<br><a href="#" id="accountLogout">Log Out</a></div>
+        <div class="account-info"><span data-string-id="UI_TEXT_WELCOME_USERNAME">UI_TEXT_WELCOME_USERNAME</span><br><a href="#" id="accountLogout" data-string-id="UI_TEXT_LOG_OUT">UI_TEXT_LOG_OUT</a></div>
     </header>
     <main>
         <div id="promotionBanner" class="promotion-banner">
@@ -43,10 +47,10 @@
                     <div id="patchProgressBar"></div>
                 </div>
             </div>
-            <label id="patchProgressText" for="ppb">Completed</label>
+            <label id="patchProgressText" for="ppb" data-string-id="UI_TEXT_PATCH_PROGRESS_COMPLETED">UI_TEXT_PATCH_PROGRESS_COMPLETED</label>
         </div>
         <div class="launch-game">
-            <button id="launchGame">Play</button>
+            <button id="launchGame" data-string-id="UI_TEXT_LAUNCH_BUTTON_PLAY">UI_TEXT_LAUNCH_BUTTON_PLAY</button>
         </div>
     </footer>
     <div>
@@ -57,16 +61,16 @@
                 <input type="text" class="form-input" placeholder="Username" id="username" name="username">
                 <input type="password" class="form-input" placeholder="Password" id="password" name="password">
                 <input type="checkbox" id="rememberMe" name="rememberMe" style="display: initial; margin-top: 0; margin-bottom: 10px">
-                <label for="rememberMe"> Remember Me</label>
+                <label for="rememberMe"> <span data-string-id="UI_TEXT_LOGIN_MODAL_REMEMBER_ME">UI_TEXT_LOGIN_MODAL_REMEMBER_ME</span></label>
                 <input type="submit" class="form-input" id="submitLogin" value="Login">
             </form>
             <img src="images/loading.svg" id="loadingIcon" class="loading-icon">
             <p id="loginErrorMsg" class="error-msg"></p>
-            <p class="lm-footer"><a href="#" id="passwordReset">Password Reset</a> | <a href="#" id="createNewAccount">Create New Account</a></p>
+            <p class="lm-footer"><a href="#" id="passwordReset" data-string-id="UI_TEXT_LOGIN_MODAL_PASSWORD_RESET">UI_TEXT_LOGIN_MODAL_PASSWORD_RESET</a> | <a href="#" id="createNewAccount" data-string-id="UI_TEXT_LOGIN_MODAL_CREATE_NEW_ACCOUNT">UI_TEXT_LOGIN_MODAL_CREATE_NEW_ACCOUNT</a></p>
         </div>
         <div class="error-modal">
             <div style="height: 100%; overflow: hidden; position: relative">
-                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Client Error</h3>
+                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px" data-string-id="UI_TEXT_ERROR_MODAL_TITLE">UI_TEXT_ERROR_MODAL_TITLE</h3>
                 <p id="errorModalMsg" style="font-size: 16px;"></p>
                 <button id="errorModalButton" class="modal-button">OK</button>
             </div>
@@ -78,41 +82,20 @@
         </div>
         <div class="repair-modal">
             <div style="height: 100%; overflow: hidden; position: relative">
-                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Client Repair</h3>
-                <p style="font-size: 16px;">This will repair your client. Click OK to continue, or outside this box to cancel.</p>
+                <h3 style="border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px" data-string-id="UI_TEXT_CLIENT_REPAIR_MODAL_TITLE">UI_TEXT_CLIENT_REPAIR_MODAL_TITLE</h3>
+                <p style="font-size: 16px;" data-string-id="UI_TEXT_CLIENT_REPAIR_MODAL_MESSAGE">UI_TEXT_CLIENT_REPAIR_MODAL_MESSAGE</p>
                 <button id="repairModalButton" class="modal-button">OK</button>
             </div>
         </div>
         <div class="proxy-modal">
             <div style="height: 100%; overflow: hidden; position: relative">
-                <h3 style="color: #ffce2c; border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px">Warning!</h3>
-                <p style="font-size: 16px;">The only officially supported proxy mods are the ones that are already pre-installed, as well as mods listed in our <a href="#" id="discordServerLink" style="color: white">discord server</a>'s #proxy-mods channel. Any other mod is considered unsupported. Cheats, scripts, hacks and/or software that provide an advantage over your co-players are strictly prohibited. Menma's TERA team reserves every right to ban your account from accessing the game indefinitely, if they determine usage of any kind of unsupported mods.</p>
-                <button id="proxyStartButton" class="modal-button">I understand the risks, please start proxy.</button>
+                <h3 style="color: #ffce2c; border-bottom: 1px solid #fff; margin: 0; padding-bottom: 10px" data-string-id="UI_TEXT_TP_WARNING_MODAL_TITLE">UI_TEXT_TP_WARNING_MODAL_TITLE</h3>
+                <p style="font-size: 16px;" data-string-id="UI_TEXT_TP_WARNING_MODAL_MESSAGE">UI_TEXT_TP_WARNING_MODAL_MESSAGE</p>
+                <button id="proxyStartButton" class="modal-button" data-string-id="UI_TEXT_TP_WARNING_MODAL_BUTTON">UI_TEXT_TP_WARNING_MODAL_BUTTON</button>
             </div>
         </div>
     </div>
     <script>
-        const ERROR_MESSAGES = {
-            5: "Termination Code 5: DirectX could not be found, is corrupt or an incorrect version is installed.",
-            6: "Termination Code 6: The database contains invalid data.",
-            8: "Termination Code 8: A network error has occurred.",
-            9: "Termination Code 9: Session Ticket not received. The launcher did not respond to the ticket request within 5 seconds.",
-            10: "Termination Code 10: Insufficient RAM.",
-            11: "Termination Code 11: Failed to reset DirectX.",
-            12: "Termination Code 12: The graphics card in use is unsuitable, too old or unknown.",
-            13: "Termination Code 13: The game was closed due to inactivity.",
-            16: "Termination Code 16: Your connection was terminated by the server.",
-            33: "Termination Code 33: Your connection was terminated by the server.",
-            34: "Termination Code 34: Your connection was terminated by the server.",
-            257: "Termination Code 257: Login error. The server could not confirm your login.",
-            259: "Termination Code 259: Double login. Another client is logged in using your account.",
-            265: "Termination Code 265: Client corrupted. Repair the client using the launcher's repair function.",
-            273: "Termination Code 273: SLS error. Server list cannot be retrieved or contains errors.",
-            275: "Termination Code 275: TERA.exe could not be launched.",
-            65535: "The client was closed abnormally.",
-            unknown: "The client was closed. Please try again."
-        };
-
         let backdrop = document.querySelector('.modal-backdrop');
         let loginModal = document.querySelector('.login-modal');
         let errorModal = document.querySelector('.error-modal');
@@ -124,6 +107,15 @@
         let patchingPaused = false;
         let isLoggedIn = false;
         let proxyRunning = false;
+        let accountUsername;
+
+        document.getElementById('selectedLangImg').src = "images/lang/" + window.language + ".png";
+
+        for(let element of document.body.getElementsByTagName('*')) {
+            if(element.dataset.stringId) {
+                element.innerHTML = window.strings[window.language][element.dataset.stringId].replace("${username}", accountUsername);
+            }
+        }
 
         function init() {
             document.getElementById("repair-btn").addEventListener("click", showRepairModal);
@@ -179,7 +171,6 @@
                 else
                     document.getElementById('langDropdownContent').style.display = "block";
             });
-
 
             for(let el of document.getElementsByClassName('lang-selector')) {
                 el.addEventListener('click', selectLanguage);
@@ -317,10 +308,6 @@
             ipcRenderer.send('repair-client');
         }
 
-        ipcRenderer.on('switchLanguage', (event, lang) => {
-            document.getElementById('selectedLangImg').src = "images/lang/" + lang + ".png";
-        });
-
         ipcRenderer.on('patchProgress', (event, percentage, text, launchButton = 0) => {
             document.getElementById('patchProgressBar').style.width = percentage + "%";
             document.getElementById('patchProgressText').innerHTML = text;
@@ -329,7 +316,7 @@
                 case 0: {
                     let launchGameBtn = document.getElementById('launchGame')
                     launchGameBtn.classList.remove('disabled');
-                    launchGameBtn.innerHTML = "Play";
+                    _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
                     patching = false;
                     document.getElementById('repair-btn').classList.remove('disabled');
                     break;
@@ -337,7 +324,7 @@
                 case 1: {
                     let launchGameBtn = document.getElementById('launchGame')
                     launchGameBtn.classList.add('disabled');
-                    launchGameBtn.innerHTML = "Play";
+                    _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
                     patching = true;
                     document.getElementById('repair-btn').classList.add('disabled');
                     break;
@@ -345,14 +332,16 @@
                 case 2: {
                     let launchGameBtn = document.getElementById('launchGame')
                     launchGameBtn.classList.remove('disabled');
-                    launchGameBtn.innerHTML = "Pause";
+                    _t(launchGameBtn, 'UI_TEXT_PATCH_PROGRESS_BUTTON_PAUSE');
+                    patching = true;
                     patchingPaused = false;
                     break;
                 }
                 case 3: {
                     let launchGameBtn = document.getElementById('launchGame')
                     launchGameBtn.classList.remove('disabled');
-                    launchGameBtn.innerHTML = "Resume";
+                    _t(launchGameBtn, 'UI_TEXT_PATCH_PROGRESS_BUTTON_RESUME');
+                    patching = true;
                     patchingPaused = true;
                     break;
                 }
@@ -384,6 +373,7 @@
                 isLoggedIn = true;
                 document.querySelector('.account-info').style.display = "initial";
                 document.getElementById('accountName').innerHTML = username;
+                accountUsername = username;
 
                 if(!document.getElementById('username').value)
                     document.getElementById('username').value = username;
@@ -417,7 +407,7 @@
                 hideLoginModal();
                 let launchGameBtn = document.getElementById("launchGame");
                 launchGameBtn.classList.add('disabled');
-                launchGameBtn.innerHTML = "Launching...";
+                _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_LAUNCHING');
                 document.getElementById('repair-btn').classList.add('disabled');
             } else if(err !== "request-cancel") {
                 document.getElementById('loginErrorMsg').innerHTML = err;
@@ -426,15 +416,15 @@
 
         ipcRenderer.on('gameMessage', (event, message, code) => {
             if(message === "gameEvent" && code === 1001) {
-                document.getElementById("launchGame").innerHTML = "Game Running";
+                _t(document.getElementById("launchGame"), "UI_TEXT_LAUNCH_BUTTON_GAME_RUNNING");
             } else if(message === "endPopup") {
                 let terminationCode = code & 0xffff;
                 if (terminationCode == 0 || terminationCode == 7) return;
 
-                if(ERROR_MESSAGES[terminationCode]) {
-                    showErrorModal(ERROR_MESSAGES[terminationCode]);
+                if(window.strings[window.language]['UI_TEXT_TERMINATION_ERROR_MESSAGES'][terminationCode]) {
+                    showErrorModal(window.strings[window.language]['UI_TEXT_TERMINATION_ERROR_MESSAGES'][terminationCode]);
                 } else {
-                    showErrorModal(ERROR_MESSAGES.unknown);
+                    showErrorModal(window.strings[window.language]['UI_TEXT_TERMINATION_ERROR_MESSAGES']['unknown']);
                 }
             }
         });
@@ -442,7 +432,7 @@
         ipcRenderer.on('exitGame', (event) => {
             let launchGameBtn = document.getElementById("launchGame");
             launchGameBtn.classList.remove('disabled');
-            launchGameBtn.innerHTML = "Play";
+            _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
             document.getElementById('repair-btn').classList.remove('disabled');
         });
 
@@ -453,6 +443,7 @@
             document.getElementById('accountName').innerHTML = "";
             document.getElementById('username').value = "";
             document.getElementById('password').value = "";
+            accountUsername = undefined;
         }
 
         document.onreadystatechange =  () => {
@@ -492,7 +483,7 @@
             
             if(proxyRunning) {
                 proxyStatus.style.color = "yellow";
-                proxyStatus.innerHTML = "Stopping...";
+                _t(proxyStatus, 'UI_TEXT_TP_STATUS_STOPPING');
                 ipcRenderer.send('stopProxy');
             } else {
                 showProxyModal();
@@ -507,7 +498,7 @@
             let proxyStatus = document.getElementById('proxyStatus');
             let toggleButton = document.getElementById('toggleProxy');
             proxyStatus.style.color = "yellow";
-            proxyStatus.innerHTML = "Starting...";
+            _t(proxyStatus, 'UI_TEXT_TP_STATUS_STARTING');
             ipcRenderer.send('startProxy');
             toggleButton.style.pointerEvents = "none";
             toggleButton.style.color = "gray";
@@ -519,11 +510,11 @@
             let toggleButton = document.getElementById('toggleProxy');
             let warningIcon = document.querySelector('.proxy-info .warning-icon');
             proxyStatus.style.color = "#0f0";
-            proxyStatus.innerHTML = "Running";
+            _t(proxyStatus, 'UI_TEXT_TP_STATUS_RUNNING');
 
             toggleButton.style.pointerEvents = "auto";
             toggleButton.style.color = "#fff";
-            toggleButton.innerHTML = "Stop";
+            _t(toggleButton, 'UI_TEXT_TP_STOP');
             proxyRunning = true;
 
             if(failedMods.length > 0) {
@@ -540,10 +531,10 @@
             let toggleButton = document.getElementById('toggleProxy');
             let warningIcon = document.querySelector('.proxy-info .warning-icon');
             proxyStatus.style.color = "#f00";
-            proxyStatus.innerHTML = "Stopped";
+            _t(proxyStatus, 'UI_TEXT_TP_STATUS_STOPPED');
             toggleButton.style.pointerEvents = "auto";
             toggleButton.style.color = "#fff";
-            toggleButton.innerHTML = "Start";
+            _t(toggleButton, 'UI_TEXT_TP_START');
 
             if(err) {
                 warningIcon.style.display = "initial";
@@ -599,6 +590,11 @@
 
             promotionBanner.style.display = 'initial';
         });
+
+        function _t(el, stringId) {
+            el.dataset.stringId = stringId;
+            el.innerHTML = window.strings[window.language][stringId];
+        }
     </script>
 </body>
 </html>
