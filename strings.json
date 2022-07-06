@@ -1,5 +1,10 @@
 {
     "uk": {
+        "UI_TEXT_UPDATE_CHECK_FOR_UPDATES": "Checking for updates...",
+        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Downloading update ${percentage}...",
+        "UI_TEXT_UPDATE_VERIFYING_INTEGRITY": "Verifying integrity...",
+        "UI_TEXT_UPDATE_INSTALLING_UPDATE": "Installing update...",
+        "UI_TEXT_UPDATE_FAILED": "Failed to update. Starting launcher...",
         "UI_TEXT_TP_STATUS_RUNNING": "Running",
         "UI_TEXT_TP_STATUS_STOPPED": "Stopped",
         "UI_TEXT_TP_STATUS_STARTING": "Starting...",

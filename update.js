@@ -4,6 +4,7 @@ const http = require('https');
 const fs = require('fs');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const strings = require('./strings.json');
 
 const UPDATE_URL = "https://emilia.menmastera.com/launcher/";
 
@@ -34,7 +35,7 @@ function createWindow(cb) {
 }
 
 async function checkForUpdatesAndDownload() {
-    updateStatus('Checking for updates...');
+    updateStatus('UI_TEXT_UPDATE_CHECK_FOR_UPDATES');
 
     if(fs.existsSync('./MTLUpdater.exe.bak'))
         fs.unlinkSync('./MTLUpdater.exe.bak');
@@ -55,7 +56,7 @@ async function checkForUpdatesAndDownload() {
             return;
         }
 
-        updateStatus('Downloading update...');
+        updateStatus('UI_TEXT_UPDATE_DOWNLOADING_UPDATE', 0);
 
         fs.mkdirSync('./update-cache');
         let fstream = fs.createWriteStream('./update-cache/' + manifest.path);
@@ -68,7 +69,7 @@ async function checkForUpdatesAndDownload() {
                 res.on('data', (chunk) => {
                     received += chunk.length;
                     let percentage = Math.trunc(received / total * 10000) / 100;
-                    updateStatus(`Downloading update ${percentage}%...`);
+                    updateStatus('UI_TEXT_UPDATE_DOWNLOADING_UPDATE', percentage);
                 });
             } else {
                 fstream.destroy();
@@ -77,12 +78,12 @@ async function checkForUpdatesAndDownload() {
 
             fstream.on('finish', () => {
                 if(res.complete) {
-                    updateStatus('Verifying integrity...');
+                    updateStatus('UI_TEXT_UPDATE_VERIFYING_INTEGRITY');
 
                     let sha256 = crypto.createHash('sha256').update(fs.readFileSync('./update-cache/' + manifest.path)).digest('hex');
 
                     if(sha256 === manifest.hash) {
-                        updateStatus('Installing update...');
+                        updateStatus('UI_TEXT_UPDATE_INSTALLING_UPDATE');
 
                         fstream.close(() => {
                             startProcess('update-cache\\' + manifest.path, "\"Menma's TERA.exe\"");
@@ -96,7 +97,7 @@ async function checkForUpdatesAndDownload() {
             throw err;
         });
     } catch (e) {
-        updateStatus('Failed to update. Starting launcher...');
+        updateStatus('UI_TEXT_UPDATE_FAILED');
         console.error(e);
 
         setTimeout(function() {
@@ -111,8 +112,8 @@ function startProcess(archivePath, launcherPath) {
     child.unref();
 }
 
-function updateStatus(msg) {
-    win.webContents.send('updateStatus', msg);
+function updateStatus(stringId, percentage) {
+    win.webContents.send('updateStatus', strings[global.config.lang][stringId].replace('${percentage}', percentage));
 }
 
 module.exports = createWindow;
