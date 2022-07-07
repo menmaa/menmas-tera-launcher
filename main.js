@@ -33,6 +33,14 @@ global.patchStatus = {
     errorMessage: null
 };
 
+global.TeraProxy = {
+    DevMode: false,
+    DiscordUrl: "https://discord.gg/YjUnmbgVjX",
+    SupportUrl: "https://discord.gg/YjUnmbgVjX",
+    GUIMode: false,
+    IsAdmin: true
+};
+
 const KEYTAR_SERVICE_NAME = "MenmasTERA";
 
 let MessageListener;
@@ -108,7 +116,23 @@ function createWindow () {
         console.error(err);
     });
 
-    if(legacyInstaller || fs.existsSync(path.join(process.cwd(), 'Client/build.json'))) {
+    let buildInfoExists = fs.existsSync(path.join(process.cwd(), 'Client/build.json'));
+
+    if(buildInfoExists) {
+        let buildInfo = require(path.join(process.cwd(), 'Client/build.json'));
+
+        if(buildInfo.architecture !== "x64") {
+            win.webContents.send('patchProgress', 100, strings[global.config.lang]["UI_TEXT_PATCH_PROGRESS_REMOVE_LEGACY_INSTALL"]);
+
+            const rimraf = require('rimraf');
+            rimraf(path.join(process.cwd(), 'Client'), (err) => {
+                if(err) throw err;
+            });
+        }
+        buildInfoExists = false;
+    };
+
+    if(legacyInstaller || buildInfoExists) {
         patcher.checkForUpdates(win);
         patcherWay = 1;
     } else {
@@ -131,9 +155,13 @@ function createWindow () {
 
         win.webContents.send('patchProgress', global.patchStatus.percentage, str, global.patchStatus.status);
 
-        axios.get('https://account.menmastera.com/api/v1/launcher/retrieve_promo_info').then((response) => {
+        axios.get(`https://account.menmastera.com/api/v1/launcher/retrieve_promo_info?locale=${global.config.lang}`).then((response) => {
             win.webContents.send('promotionBannerInfo', response.data);
         }).catch((err) => { console.error(err.message) });
+
+        if(proxy) {
+            win.webContents.send('proxy-running', proxy.modManager.failedMods);
+        }
     });
 
     // Redirect console to built-in one
@@ -208,6 +236,7 @@ ipcMain.on('loginRequest', async (event, username, password, rememberMe) => {
 ipcMain.on('logoutRequest', (event) => {
     loginController.logout(loginData.token);
     keytar.deletePassword(KEYTAR_SERVICE_NAME, loginData.username);
+    loginData = null;
 });
 
 ipcMain.on('abort-login-req', (event) => {
@@ -253,14 +282,6 @@ ipcMain.on('window-close', (event) => {
 });
 
 ipcMain.on('startProxy', (event) => {
-    global.TeraProxy = {
-        DevMode: false,
-        DiscordUrl: "https://discord.gg/YjUnmbgVjX",
-        SupportUrl: "https://discord.gg/YjUnmbgVjX",
-        GUIMode: false,
-        IsAdmin: true
-    };
-
     let DataFolder = path.join(process.cwd(), 'proxy', 'data');
     let ModuleFolder = path.join(process.cwd(), 'proxy', 'mods');
 

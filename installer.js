@@ -130,8 +130,6 @@ async function startInstallation(win, callback) {
                 updatePatchProgress(win, 2, 'UI_TEXT_PATCH_PROGRESS_DOWNLOADING_FILES', percentage, downloadSizeFormatted, totalSizeFormatted, downloadSpeedFormatted, timeRemaining);
             }, 1000);
 
-            //win.webContents.send('patchProgress', Math.trunc(downloadedSize / totalSize * 10000) / 100, 'Downloading Files...', 2);
-
             while(toDownload.length > 0) {
                 let part = toDownload[0];
                 let dlPath = path.join(DOWNLOAD_PATH, part.name);
@@ -182,8 +180,6 @@ async function startInstallation(win, callback) {
             clearInterval(patchProgressUpdate);
         }
 
-        //win.webContents.send('patchProgress', 0, 'Extracting files 0.00%...', 1);
-
         let partList = buildInfo.fileList.map((part) => fs.createReadStream(path.join(DOWNLOAD_PATH, part.name)));
         let zipFile = new MultiStream(partList).pipe(unzipper.Parse({ forceStream: true }));
         let amount = buildInfo.entryCount, i = 1;
@@ -222,8 +218,6 @@ async function startInstallation(win, callback) {
         } else {
             skipIntegrityCheck = false;
             updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
-            //console.error(err);
-            throw err;
         }
     }
 }

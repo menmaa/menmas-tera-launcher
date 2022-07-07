@@ -171,7 +171,7 @@ async function downloadFiles(win) {
         clearInterval(patchProgressUpdate);
         updatePatchProgress(win, 0, "UI_TEXT_PATCH_PROGRESS_COMPLETED");
 
-        fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, buildVersion }), (err) => {
+        fs.writeFile('Client/build.json', JSON.stringify({ files: downloadedFiles, architecture: "x64", buildVersion }), (err) => {
             if(err) throw err;
         });
     } catch(err) {
