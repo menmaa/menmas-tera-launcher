@@ -31,7 +31,8 @@
     "files": [
       "*.js",
       "src/",
-      "node_modules/"
+      "node_modules/",
+      "strings.json"
     ],
     "win": {
       "target": [
