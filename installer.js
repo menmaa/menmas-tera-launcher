@@ -5,6 +5,7 @@ const https = require('https');
 const MultiStream = require('multistream');
 const unzipper = require('unzipper');
 const crypto = require('crypto');
+const rimraf = require('rimraf');
 const strings = require('./strings.json');
 
 const PATCH_HOSTNAME = 'emilia.menmastera.com';
@@ -199,10 +200,9 @@ async function startInstallation(win, callback) {
 
         updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_CLEANING_UP");
 
-        fs.readdirSync(DOWNLOAD_PATH).forEach((file) => {
-            fs.unlinkSync(path.join(DOWNLOAD_PATH, file));
+        rimraf(DOWNLOAD_PATH, (err) => {
+            if(err) throw err;
         });
-        fs.rmdirSync(DOWNLOAD_PATH);
 
         updatePatchProgress(win, 0, "UI_TEXT_PATCH_PROGRESS_COMPLETED");
 
