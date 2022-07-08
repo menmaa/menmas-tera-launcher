@@ -128,8 +128,9 @@ function createWindow () {
             rimraf(path.join(process.cwd(), 'Client'), (err) => {
                 if(err) throw err;
             });
+
+            buildInfoExists = false;
         }
-        buildInfoExists = false;
     };
 
     if(legacyInstaller || buildInfoExists) {

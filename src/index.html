@@ -166,6 +166,9 @@
             });
 
             window.addEventListener('click', function(event) {
+                if(document.getElementById('toggleLangDropdown').classList.contains('disabled'))
+                    return;
+
                 if(!event.target.matches('#selectedLangImg'))
                     document.getElementById('langDropdownContent').style.display = "";
                 else
@@ -335,6 +338,7 @@
                     _t(launchGameBtn, 'UI_TEXT_PATCH_PROGRESS_BUTTON_PAUSE');
                     patching = true;
                     patchingPaused = false;
+                    document.getElementById('repair-btn').classList.add('disabled');
                     break;
                 }
                 case 3: {
@@ -343,6 +347,7 @@
                     _t(launchGameBtn, 'UI_TEXT_PATCH_PROGRESS_BUTTON_RESUME');
                     patching = true;
                     patchingPaused = true;
+                    document.getElementById('repair-btn').classList.add('disabled');
                     break;
                 }
             }
@@ -409,6 +414,7 @@
                 launchGameBtn.classList.add('disabled');
                 _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_LAUNCHING');
                 document.getElementById('repair-btn').classList.add('disabled');
+                document.getElementById('toggleLangDropdown').classList.add('disabled');
             } else if(err !== "request-cancel") {
                 document.getElementById('loginErrorMsg').innerHTML = err;
             }
@@ -434,6 +440,7 @@
             launchGameBtn.classList.remove('disabled');
             _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
             document.getElementById('repair-btn').classList.remove('disabled');
+            document.getElementById('toggleLangDropdown').classList.remove('disabled');
         });
 
         function logout() {

@@ -49,7 +49,7 @@ async function checkForUpdates(win, skipCheck = false) {
             let remoteBuildVersion = await getLatestBuildVersion();
 
             if(localBuildVersion === remoteBuildVersion) {
-                win.webContents.send('patchProgress', 100, "Completed", 0);
+                updatePatchProgress(win, 0, "UI_TEXT_PATCH_PROGRESS_COMPLETED");
                 return;
             }
 

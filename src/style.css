@@ -223,7 +223,7 @@ footer {
     font-size: 30px;
 }
 
-#repair-btn.disabled {
+.disabled {
     cursor: initial !important;
 }
 
