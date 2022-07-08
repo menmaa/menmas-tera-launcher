@@ -1,7 +1,7 @@
 {
     "uk": {
         "UI_TEXT_UPDATE_CHECK_FOR_UPDATES": "Checking for updates...",
-        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Downloading update ${percentage}...",
+        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Downloading update ${percentage}%...",
         "UI_TEXT_UPDATE_VERIFYING_INTEGRITY": "Verifying integrity...",
         "UI_TEXT_UPDATE_INSTALLING_UPDATE": "Installing update...",
         "UI_TEXT_UPDATE_FAILED": "Failed to update. Starting launcher...",
@@ -63,7 +63,7 @@
     },
     "de": {
         "UI_TEXT_UPDATE_CHECK_FOR_UPDATES": "Nach Updates suchen...",
-        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Update herunterladen ${percentage}...",
+        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Update herunterladen ${percentage}%...",
         "UI_TEXT_UPDATE_VERIFYING_INTEGRITY": "Überprüfung der Integrität...",
         "UI_TEXT_UPDATE_INSTALLING_UPDATE": "Update installieren...",
         "UI_TEXT_UPDATE_FAILED": "Aktualisierung fehlgeschlagen. Launcher starten...",
@@ -125,7 +125,7 @@
     },
     "fr": {
         "UI_TEXT_UPDATE_CHECK_FOR_UPDATES": "Vérification de mises à jour...",
-        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Téléchargement de la mises à jour ${percentage}...",
+        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Téléchargement de la mises à jour ${percentage}%...",
         "UI_TEXT_UPDATE_VERIFYING_INTEGRITY": "Vérification de l'intégriter des fichiers...",
         "UI_TEXT_UPDATE_INSTALLING_UPDATE": "Installation de la mise à jour...",
         "UI_TEXT_UPDATE_FAILED": "Echec de la mise à jour. Démarrage du client...",
@@ -187,7 +187,7 @@
     },
     "ru": {
         "UI_TEXT_UPDATE_CHECK_FOR_UPDATES": "Проверка на наличие обновлений...",
-        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Скачивание обновления ${percentage}...",
+        "UI_TEXT_UPDATE_DOWNLOADING_UPDATE": "Скачивание обновления ${percentage}%...",
         "UI_TEXT_UPDATE_VERIFYING_INTEGRITY": "Проверка подленности файлов...",
         "UI_TEXT_UPDATE_INSTALLING_UPDATE": "Установка обновления...",
         "UI_TEXT_UPDATE_FAILED": "Не удалось обновить...Запуск лаунчера..",
