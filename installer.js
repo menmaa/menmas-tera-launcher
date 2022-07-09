@@ -219,6 +219,7 @@ async function startInstallation(win, callback) {
             let toDownloadSizeFormatted = formatBytes(totalSize);
             updatePatchProgress(win, 3, "UI_TEXT_PATCH_PROGRESS_DOWNLOAD_PAUSED", percentage, downloadSizeFormatted, toDownloadSizeFormatted);
         } else {
+            console.error(err);
             skipIntegrityCheck = false;
             updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
         }
