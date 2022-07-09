@@ -100,8 +100,10 @@ async function startInstallation(win, callback) {
 
                 let same = await new Promise((resolve, reject) => {
                     fs.readFile(filePath, (err, data) => {
-                        if(err)
+                        if(err) {
                             reject(err);
+                            return;
+                        }
 
                         let hash = crypto.createHash('sha1').update(data).digest('hex');
                         resolve(hash === remoteFile.sha1);
@@ -149,6 +151,7 @@ async function startInstallation(win, callback) {
                     currentHttpReq = https.get(reqOptions, (response) => {
                         if(response.statusCode != 200 && response.statusCode != 206) {
                             reject(new Error('Could not retrieve installation files. The server responded with a status code of ' + response.statusCode + '.'));
+                            return;
                         }
                         response.pipe(fstream);
 
@@ -291,13 +294,16 @@ function secondsToTime(s) {
 function verifyIntegrity(expectedHash, filePath) {
     return new Promise((resolve, reject) => {
         fs.readFile(filePath, (err, data) => {
-            if(err)
+            if(err) {
                 reject(err);
+                return;
+            }
 
             let hash = crypto.createHash('sha1').update(data).digest('hex');
 
             if(hash !== expectedHash) {
                 reject(new Error('Integrity Verification failed for file ' + path.basename(filePath) + '. Please restart download.'));
+                return;
             }
 
             resolve();
