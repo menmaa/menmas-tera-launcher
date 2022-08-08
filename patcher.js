@@ -131,6 +131,7 @@ async function downloadFiles(win) {
                             fs.unlinkSync(path);
                     } catch(err) {
                         reject(err);
+                        return;
                     }
 
                     operation.attempt(function() {
