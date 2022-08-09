@@ -56,7 +56,6 @@ async function getServerInfo(loginToken) {
 
     return new Promise((resolve, reject) => {
         axios.get(LOGIN_URL + '/getServerInfo', {
-                transformResponse: (res) => res,
                 headers: {'Authorization': 'Bearer ' + loginToken},
                 cancelToken: source.token
             }).then((response) => {
@@ -78,7 +77,15 @@ async function getServerInfo(loginToken) {
                         break;
                     }
                     case 403: {
-                        reject("Your account has been banned.<br>Reason: " + err.response.data.toString());
+                        let data = err.response.data;
+                        if(data.banExpiryDate) {
+                            let d = new Date(data.banExpiryDate);
+                            reject(`Your account has been banned until ${d.toLocaleDateString()} for violating the Terms of Service. For more information please contact support.`);
+                        } else if(data.vpn) {
+                            reject('Suspicious behaviour, unable to login. Please disable any VPN services and try again. For more information please contact support.');
+                        } else {
+                            reject('Error 403: Forbidden');
+                        }
                         break;
                     }
                     case 503: {
