@@ -90,7 +90,7 @@ async function checkForUpdates(win, skipCheck = false) {
         downloadFiles(win);
     } catch (err) {
         clearInterval(patchProgressUpdate);
-        updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
+        updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, null, err.message);
     }
 }
 
@@ -183,7 +183,7 @@ async function downloadFiles(win) {
             let toDownloadSizeFormatted = formatBytes(toDownloadSize);
             updatePatchProgress(win, 3, "UI_TEXT_PATCH_PROGRESS_DOWNLOAD_PAUSED", percentage, downloadSizeFormatted, toDownloadSizeFormatted);
         } else
-            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
+            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, null, err.message);
     }
 }
 

@@ -221,7 +221,7 @@ async function startInstallation(win, callback) {
         } else {
             console.error(err);
             skipIntegrityCheck = false;
-            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, err.message);
+            updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_FAILED", null, null, null, null, null, err.message);
         }
     }
 }
