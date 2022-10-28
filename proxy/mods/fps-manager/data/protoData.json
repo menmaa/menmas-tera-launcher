@@ -31,7 +31,7 @@
 		"default": 1
 	},
 	"S_SPAWN_NPC": {
-		"default": 12,
+		"default": 11,
 		"92": 11
 	},
 	"S_DESPAWN_NPC": {
