@@ -1,6 +1,6 @@
 {
   "name": "menmas-tera-launcher",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Menma's TERA Launcher",
   "main": "main.js",
   "scripts": {
