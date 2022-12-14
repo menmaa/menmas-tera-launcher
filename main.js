@@ -249,7 +249,7 @@ ipcMain.on('launchGame', async (event) => {
         gameStr = await loginController.getServerInfo(loginData.token);
         event.reply('launchGameRes', null);
 
-        tl.launchGame(gameStr, config.lang, (err) => {
+        tl.launchGame(gameStr, "uk", (err) => {
             if(err) throw err;
             event.reply('exitGame');
         });
