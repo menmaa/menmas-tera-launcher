@@ -8,9 +8,13 @@ const crypto = require('crypto');
 const rimraf = require('rimraf');
 const strings = require('./strings.json');
 
-const PATCH_HOSTNAME = 'emilia.menmastera.com';
+let PATCH_HOSTNAME = 'patch.menmastera.com';
 const PATCH_PATH = '/download';
 const DOWNLOAD_PATH = path.join(process.cwd(), 'install_data');
+
+if(process.argv.includes('--MT_NO_CF')) {
+    PATCH_HOSTNAME = 'emilia.menmastera.com';
+}
 
 let toDownload = [];
 let downloadedSize = 0;

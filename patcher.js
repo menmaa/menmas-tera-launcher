@@ -7,7 +7,11 @@ const retry = require('retry');
 const strings = require('./strings.json');
 
 const MAX_DOWNLOAD_SPEED_VALUES = 10;
-const PATCH_URL = 'https://emilia.menmastera.com/patch';
+let PATCH_URL = 'https://patch.menmastera.com/patch';
+
+if(process.argv.includes('--MT_NO_CF')) {
+    PATCH_URL = 'https://emilia.menmastera.com/patch';
+}
 
 let patchProgressUpdate;
 let downloadedFiles = {};
