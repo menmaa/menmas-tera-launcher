@@ -1,13 +1,13 @@
 {
   "name": "menmas-tera-launcher",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Menma's TERA Launcher",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder"
   },
-  "author": "Menma",
+  "author": "Menma Systems",
   "license": "UNLICENSED",
   "devDependencies": {
     "electron": "^11.5.0",
@@ -46,8 +46,10 @@
         "version.txt",
         "proxy/"
       ],
-      "publisherName": "Menma",
-      "verifyUpdateCodeSignature": false,
+      "publisherName": "MENMA SYSTEMS MONOPROSOPI I.K.E.",
+      "certificateSubjectName": "CN=MENMA SYSTEMS MONOPROSOPI I.K.E.",
+      "verifyUpdateCodeSignature": true,
+      "signAndEditExecutable": true,
       "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
