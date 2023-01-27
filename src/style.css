@@ -3,6 +3,15 @@
 	src: url('fonts/Mairon-KYre.ttf');
 }
 
+@keyframes ppbAnim {
+    from {
+        background-position-x: 0%;
+    }
+    to {
+        background-position-x: 100%;
+    }
+}
+
 * {
     box-sizing: border-box;
 }
@@ -134,6 +143,7 @@ footer {
     width: 100%;
     height: inherit;
     transition: width .5s linear;
+    overflow: hidden;
 }
 
 .launch-game {
@@ -446,4 +456,12 @@ footer {
     margin-right: 10px;
     width: 24px;
     height: 24px;
+}
+
+.progressBarAnim {
+    width: calc(75vw - 40px);
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(168,168,168,1) 50%, rgba(0,0,0,0) 100%);
+    background-size: 50% 100%;
+    animation: ppbAnim 2s linear 0s infinite;
 }

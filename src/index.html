@@ -44,7 +44,9 @@
         <div class="patch-progress">
             <div class="patch-progress-inner">
                 <div id="ppb" class="patch-progress-bar">
-                    <div id="patchProgressBar"></div>
+                    <div id="patchProgressBar">
+                        <div id="progressBarAnim"></div>
+                    </div>
                 </div>
             </div>
             <label id="patchProgressText" for="ppb" data-string-id="UI_TEXT_PATCH_PROGRESS_COMPLETED">UI_TEXT_PATCH_PROGRESS_COMPLETED</label>
@@ -322,6 +324,7 @@
                     _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
                     patching = false;
                     document.getElementById('repair-btn').classList.remove('disabled');
+                    document.getElementById('progressBarAnim').className = '';
                     break;
                 }
                 case 1: {
@@ -330,6 +333,7 @@
                     _t(launchGameBtn, 'UI_TEXT_LAUNCH_BUTTON_PLAY');
                     patching = true;
                     document.getElementById('repair-btn').classList.add('disabled');
+                    document.getElementById('progressBarAnim').className = 'progressBarAnim';
                     break;
                 }
                 case 2: {
@@ -339,6 +343,7 @@
                     patching = true;
                     patchingPaused = false;
                     document.getElementById('repair-btn').classList.add('disabled');
+                    document.getElementById('progressBarAnim').className = 'progressBarAnim';
                     break;
                 }
                 case 3: {
@@ -348,6 +353,7 @@
                     patching = true;
                     patchingPaused = true;
                     document.getElementById('repair-btn').classList.add('disabled');
+                    document.getElementById('progressBarAnim').className = '';
                     break;
                 }
             }
