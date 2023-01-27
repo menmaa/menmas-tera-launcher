@@ -79,7 +79,7 @@ async function checkForUpdates(win, skipCheck = false) {
 
             if(downloadedFiles[entry.file] && !skipCheck) {
                 if(downloadedFiles[entry.file] !== entry.sha1) {
-                    toDownload.push({ path: entry.file, hash: entry.sha1 });
+                    toDownload.push({ key: entry.key, path: entry.file, hash: entry.sha1 });
                     toDownloadSize += entry.size;
                 }
             } else if(!(await checkFileIntegrity(entry))) {
