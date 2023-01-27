@@ -8,13 +8,10 @@ const crypto = require('crypto');
 const rimraf = require('rimraf');
 const strings = require('./strings.json');
 
-let PATCH_HOSTNAME = 'patch.menmastera.com';
-const PATCH_PATH = '/download';
+const MAX_DOWNLOAD_SPEED_VALUES = 10;
+const PATCH_INFO_URL = 'https://emilia.menmastera.com/download/eri.json';
+const PATCH_HOSTNAME = 'download.r2.menmastera.com';
 const DOWNLOAD_PATH = path.join(process.cwd(), 'install_data');
-
-if(process.argv.includes('--MT_NO_CF')) {
-    PATCH_HOSTNAME = 'emilia.menmastera.com';
-}
 
 let toDownload = [];
 let downloadedSize = 0;
@@ -24,6 +21,7 @@ let patchProgressUpdate;
 let lastDownloadedSize = 0;
 let skipIntegrityCheck = false;
 let currentHttpReq;
+let downloadSpeeds;
 let agent = new https.Agent({
     keepAlive: true,
     maxSockets: 1,
@@ -38,7 +36,7 @@ async function startInstallation(win, callback) {
 
     try {
         let buildInfo = await getInstallBuildInfo();
-        totalSize = buildInfo.totalSize;
+        totalSize = buildInfo.archiveSize;
         totalSizeFormatted = formatBytes(totalSize);
 
         if(!fs.existsSync(DOWNLOAD_PATH)) {
@@ -82,9 +80,13 @@ async function startInstallation(win, callback) {
                 }
 
                 if(fileSize < remoteFile.size) {
-                    let res = await axios.get(`https://${PATCH_HOSTNAME + PATCH_PATH}/${buildInfo.fileList[sfIdx].sha1}`, {
+                    let res = await axios.get(`https://${PATCH_HOSTNAME}/${buildInfo.fileList[sfIdx].sha1}`, {
                         responseType: 'arraybuffer',
-                        headers: { 'Range': `bytes=0-${fileSize-1}` }
+                        headers: { 
+                            'Range': `bytes=0-${fileSize-1}`,
+                            'Accept': '*/*',
+                            'User-Agent' :'MTL/1.5'
+                        }
                     });
 
                     let hash1 = crypto.createHash('sha1').update(res.data).digest('hex');
@@ -126,8 +128,17 @@ async function startInstallation(win, callback) {
         }
 
         if(downloadedSize < totalSize) {
+            downloadSpeeds = new Array(MAX_DOWNLOAD_SPEED_VALUES).fill(0);
+            lastDownloadedSize = downloadedSize;
+
             patchProgressUpdate = setInterval(() => {
-                let downloadSpeed = downloadedSize - lastDownloadedSize;
+                downloadSpeeds.shift();
+                downloadSpeeds.push(downloadedSize - lastDownloadedSize);
+
+                let downloadSpeed = 0;
+                downloadSpeeds.forEach((speed) => downloadSpeed += speed);
+                downloadSpeed /= MAX_DOWNLOAD_SPEED_VALUES;
+
                 let percentage = (Math.trunc(downloadedSize / totalSize * 10000) / 100).toFixed(2);
                 let downloadSizeFormatted = formatBytes(downloadedSize);
                 let downloadSpeedFormatted = formatBytes(downloadSpeed) + "/s";
@@ -145,9 +156,11 @@ async function startInstallation(win, callback) {
                 let reqOptions = {
                     agent,
                     hostname: PATCH_HOSTNAME,
-                    path: `${PATCH_PATH}/${part.sha1}`,
+                    path: `/${part.sha1}`,
                     headers: {
-                        'Range': `bytes=${part.startOffset}-${part.size-1}`
+                        'Range': `bytes=${part.startOffset}-${part.size-1}`,
+                        'Accept': '*/*',
+                        'User-Agent' :'MTL/1.5'
                     }
                 };
 
@@ -190,7 +203,7 @@ async function startInstallation(win, callback) {
 
         let partList = buildInfo.fileList.map((part) => fs.createReadStream(path.join(DOWNLOAD_PATH, part.name)));
         let zipFile = new MultiStream(partList).pipe(unzipper.Parse({ forceStream: true }));
-        let amount = buildInfo.entryCount, i = 1;
+        let decompressedSize = 0;
 
         for await (let entry of zipFile) {
             if(entry.type == 'Directory') {
@@ -199,9 +212,13 @@ async function startInstallation(win, callback) {
                 entry.autodrain();
             } else if(entry.type == 'File') {
                 entry.pipe(fs.createWriteStream(path.join(process.cwd(), entry.path)));
+
+                entry.on('data', function(chunk) {
+                    decompressedSize += chunk.length;
+                });
             }
 
-            let percentage = (Math.trunc((i++) / amount * 10000) / 100).toFixed(2);
+            let percentage = (Math.trunc((decompressedSize / buildInfo.totalSize) * 10000) / 100).toFixed(2);
             updatePatchProgress(win, 1, "UI_TEXT_PATCH_PROGRESS_EXTRACTING_FILES", percentage);
         }
 
@@ -252,8 +269,12 @@ function updatePatchProgress(win, status, stringId, percentage = 100, downloadSi
 
 function getInstallBuildInfo() {
     return new Promise((resolve, reject) => {
-        axios.get(`https://${PATCH_HOSTNAME + PATCH_PATH}/build.json`)
-        .then((response) => {
+        axios.get(PATCH_INFO_URL, {
+            headers: {
+                'Accept': '*/*',
+                'User-Agent' :'MTL/1.5'
+            }
+        }).then((response) => {
             if(response.status === 200) {
                 resolve(response.data);
             } else {

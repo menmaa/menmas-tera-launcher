@@ -7,11 +7,8 @@ const retry = require('retry');
 const strings = require('./strings.json');
 
 const MAX_DOWNLOAD_SPEED_VALUES = 10;
-let PATCH_URL = 'https://patch.menmastera.com/patch';
-
-if(process.argv.includes('--MT_NO_CF')) {
-    PATCH_URL = 'https://emilia.menmastera.com/patch';
-}
+const PATCH_INFO_URL = 'https://emilia.menmastera.com/patch';
+const PATCH_URL = 'https://patch.r2.menmastera.com';
 
 let patchProgressUpdate;
 let downloadedFiles = {};
@@ -22,14 +19,18 @@ let toDownloadSize = 0;
 let toDownloadSizeFormatted;
 let downloadedSize = 0;
 let lastDownloadedSize = 0;
-let downloadSpeeds = new Array(MAX_DOWNLOAD_SPEED_VALUES).fill(0);
+let downloadSpeeds;
 let agent = axios.create({
     baseURL: PATCH_URL,
     method: 'get',
     responseType: 'stream',
     httpAgent: new http.Agent({ keepAlive: true }),
     httpsAgent: new https.Agent({ keepAlive: true }),
-    timeout: 60000
+    timeout: 60000,
+    headers: {
+        'Accept': '*/*',
+        'User-Agent' :'MTL/1.5'
+    }
 });
 
 async function checkForUpdates(win, skipCheck = false) {
@@ -82,7 +83,7 @@ async function checkForUpdates(win, skipCheck = false) {
                     toDownloadSize += entry.size;
                 }
             } else if(!(await checkFileIntegrity(entry))) {
-                toDownload.push({ path: entry.file, hash: entry.sha1 });
+                toDownload.push({ key: entry.key, path: entry.file, hash: entry.sha1 });
                 toDownloadSize += entry.size;
             } else downloadedFiles[entry.file] = entry.sha1;
 
@@ -120,7 +121,7 @@ async function downloadFiles(win) {
                 updatePatchProgress(win, 2, 'UI_TEXT_PATCH_PROGRESS_DOWNLOADING_FILES', percentage, downloadSizeFormatted, toDownloadSizeFormatted, downloadSpeedFormatted, timeRemaining);
             }, 1000);
 
-            for(let { hash, path } of [...toDownload]) {
+            for(let { key, hash, path } of [...toDownload]) {
                 await new Promise((resolve, reject) => {
                     cancellationSource = axios.CancelToken.source();
                     let operation = retry.operation({
@@ -139,7 +140,7 @@ async function downloadFiles(win) {
                     }
 
                     operation.attempt(function() {
-                        agent.get(`/${path.replaceAll('\\', '/')}`, { cancelToken: cancellationSource.token }).then((response) => {
+                        agent.get(`/${key}`, { cancelToken: cancellationSource.token }).then((response) => {
                             let fstream = fs.createWriteStream(path, { mode: 0o777 });
                             let thisDownloadedSize = 0;
                             response.data.pipe(fstream);
@@ -214,8 +215,12 @@ function updatePatchProgress(win, status, stringId, percentage = 100, downloadSi
 
 function getLatestBuildVersion() {
     return new Promise((resolve, reject) => {
-        axios.get(PATCH_URL + '/latest')
-        .then((response) => {
+        axios.get(PATCH_INFO_URL + '/latest', {
+            headers: {
+                'Accept': '*/*',
+                'User-Agent' :'MTL/1.5'
+            }
+        }).then((response) => {
             if(response.status === 200) {
                 resolve(response.data.latest);
             } else {
@@ -230,8 +235,12 @@ function getLatestBuildVersion() {
 
 function getLatestBuildInfo() {
     return new Promise((resolve, reject) => {
-        axios.get(PATCH_URL + '/latest/download')
-        .then((response) => {
+        axios.get(PATCH_INFO_URL + '/latest/download', {
+            headers: {
+                'Accept': '*/*',
+                'User-Agent' :'MTL/1.5'
+            }
+        }).then((response) => {
             if(response.status === 200) {
                 resolve(response.data);
             } else {
