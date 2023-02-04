@@ -264,6 +264,9 @@ function updatePatchProgress(win, status, stringId, percentage = 100, downloadSi
             .replace('${timeRemaining}', timeRemaining)
             .replace('${errorMessage}', errorMessage);
 
+    if(global.environment === "TEST")
+        str += ' (TEST ENVIRONMENT)';
+
     win.webContents.send('patchProgress', percentage, str, status);
 }
 

@@ -1,6 +1,6 @@
 const ffi = require('ffi-napi');
 
-const SLS_URL = "https://emilia.menmastera.com/serverlist/";
+const SLS_URL = (global.environment === "TEST" ? "https://emilia.menmastera.com/serverlist/test/" : "https://emilia.menmastera.com/serverlist/live/");
 
 const teraLauncher = ffi.Library('./Teralauncher.dll', {
     'LaunchGame': [

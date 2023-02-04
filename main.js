@@ -1,3 +1,5 @@
+global.environment = (process.argv.includes("--MT_TEST_ENV") ? "TEST" : "LIVE");
+
 const { app, BrowserWindow, ipcMain } = require('electron');
 const keytar = require('keytar');
 const fs = require('fs');
@@ -153,6 +155,9 @@ function createWindow () {
                 .replace('${downloadSpeed}', global.patchStatus.downloadSpeed)
                 .replace('${timeRemaining}', global.patchStatus.timeRemaining)
                 .replace('${errorMessage}', global.patchStatus.errorMessage);
+
+        if(global.environment === "TEST")
+            str += ' (TEST ENVIRONMENT)';
 
         win.webContents.send('patchProgress', global.patchStatus.percentage, str, global.patchStatus.status);
 

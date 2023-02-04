@@ -7,7 +7,7 @@ const retry = require('retry');
 const strings = require('./strings.json');
 
 const MAX_DOWNLOAD_SPEED_VALUES = 10;
-const PATCH_INFO_URL = 'https://emilia.menmastera.com/patch';
+const PATCH_INFO_URL = (global.environment === "TEST" ? 'https://emilia.menmastera.com/patch/test' : 'https://emilia.menmastera.com/patch/live');
 const PATCH_URL = 'https://patch.r2.menmastera.com';
 
 let patchProgressUpdate;
@@ -209,6 +209,9 @@ function updatePatchProgress(win, status, stringId, percentage = 100, downloadSi
             .replace('${downloadSpeed}', downloadSpeed)
             .replace('${timeRemaining}', timeRemaining)
             .replace('${errorMessage}', errorMessage);
+
+    if(global.environment === "TEST")
+        str += ' (TEST ENVIRONMENT)';
 
     win.webContents.send('patchProgress', percentage, str, status);
 }
