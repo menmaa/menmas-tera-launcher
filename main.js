@@ -255,7 +255,7 @@ ipcMain.on('launchGame', async (event) => {
         event.reply('launchGameRes', null);
 
         let lang = "uk";
-        if(["uk", "ru", "fr"].includes(global.config.lang))
+        if(["uk", "ru", "fr", "ja"].includes(global.config.lang))
             lang = global.config.lang;
 
         tl.launchGame(gameStr, lang, (err) => {
